@@ -97,7 +97,7 @@ class VideoParams(BaseModel):
     subtitle_enabled: Optional[bool] = True
     subtitle_position: Optional[str] = config.ui.get("subtitle_position", "bottom")  # top, bottom, center, custom
     custom_position: float = config.ui.get("custom_position", 70.0)
-    font_name: Optional[str] = "BeVietnamPro-Bold.ttf"
+    font_name: Optional[str] = "TikTokSans-Bold.ttf"
     text_fore_color: Optional[str] = "#FFFFFF"
     text_background_color: Union[bool, str] = False
     rounded_subtitle_background: bool = False
@@ -106,7 +106,7 @@ class VideoParams(BaseModel):
     stroke_color: Optional[str] = "#000000"
     stroke_width: float = 1.5
     n_threads: Optional[int] = 2
-    paragraph_number: int = Field(default=1, ge=1, le=10)
+    paragraph_number: int = Field(default=1, ge=1, le=15)
     video_script_prompt: str = Field(default="", max_length=2000)
     custom_system_prompt: str = Field(default="", max_length=8000)
 
@@ -121,7 +121,7 @@ class SubtitleRequest(BaseModel):
     bgm_file: Optional[str] = ""
     bgm_volume: Optional[float] = 0.2
     subtitle_position: Optional[str] = config.ui.get("subtitle_position", "bottom")
-    font_name: Optional[str] = "BeVietnamPro-Bold.ttf"
+    font_name: Optional[str] = "TikTokSans-Bold.ttf"
     text_fore_color: Optional[str] = "#FFFFFF"
     text_background_color: Union[bool, str] = False
     rounded_subtitle_background: bool = False
@@ -157,7 +157,7 @@ class VideoScriptParams:
 
     video_subject: Optional[str] = "春天的花海"
     video_language: Optional[str] = ""
-    paragraph_number: int = Field(default=1, ge=1, le=10)
+    paragraph_number: int = Field(default=1, ge=1, le=15)
     video_script_prompt: str = Field(default="", max_length=2000)
     custom_system_prompt: str = Field(default="", max_length=8000)
 

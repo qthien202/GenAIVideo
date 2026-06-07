@@ -417,8 +417,38 @@ def ensure_legacy_submaker_fields(sub_maker: SubMaker) -> SubMaker:
     return sub_maker
 
 
+def measure_audio_silences(audio_file: str) -> tuple:
+    """
+    Đo khoảng lặng đầu/cuối file audio (giây).
+
+    TTS (đặc biệt Gemini/ElevenLabs) thường chèn 0.3-0.8s im lặng ở đầu
+    file; nếu phụ đề bắt đầu từ 0s sẽ chạy trước giọng đọc. Đo ra để
+    dịch timeline phụ đề khớp với lúc giọng thật sự cất lên.
+    """
+    try:
+        from pydub import AudioSegment
+        from pydub.silence import detect_leading_silence
+
+        _configure_pydub_ffmpeg(AudioSegment)
+        seg = AudioSegment.from_file(audio_file)
+        lead = detect_leading_silence(seg, silence_threshold=-40.0, chunk_size=10) / 1000.0
+        tail = (
+            detect_leading_silence(seg.reverse(), silence_threshold=-40.0, chunk_size=10)
+            / 1000.0
+        )
+        return lead, tail
+    except Exception as e:
+        logger.warning(f"failed to measure audio silences: {str(e)}")
+        return 0.0, 0.0
+
+
 def populate_legacy_submaker_with_full_text(
-    sub_maker: SubMaker, text: str, audio_duration_seconds: float
+    sub_maker: SubMaker,
+    text: str,
+    audio_duration_seconds: float,
+    lead_in_seconds: float = 0.0,
+    tail_seconds: float = 0.0,
+    gap_seconds: float = 0.0,
 ) -> SubMaker:
     """
     用整段文本填充项目历史沿用的 `subs/offset` 字幕结构。
@@ -464,27 +494,44 @@ def populate_legacy_submaker_with_full_text(
         sub_maker.offset.append((0, audio_duration_100ns))
         return sub_maker
 
-    current_offset = 0
-    for index, sentence in enumerate(sentences):
+    # Trừ khoảng lặng đầu/cuối + quỹ nghỉ giữa câu khỏi thời lượng nói thật,
+    # giúp phụ đề không chạy trước giọng đọc (TTS hay ngắt ~0.3s giữa câu).
+    valid_count = sum(1 for s in sentences if s.strip())
+    lead_100ns = int(max(lead_in_seconds, 0.0) * 10000000)
+    tail_100ns = int(max(tail_seconds, 0.0) * 10000000)
+    gap_100ns = int(max(gap_seconds, 0.0) * 10000000)
+    gaps_total = gap_100ns * max(valid_count - 1, 0)
+    speech_total = audio_duration_100ns - lead_100ns - tail_100ns - gaps_total
+    if speech_total <= 0:
+        # Audio quá ngắn so với các khoảng trừ → quay về chia đều toàn bộ
+        lead_100ns = tail_100ns = gap_100ns = gaps_total = 0
+        speech_total = audio_duration_100ns
+
+    current_offset = lead_100ns
+    emitted = 0
+    for sentence in sentences:
         cleaned_sentence = sentence.strip()
         if not cleaned_sentence:
             continue
 
+        emitted += 1
         # 前面的句子按字符数比例分配时长，最后一句兜底吃掉剩余时长，
         # 避免整数取整导致总时长丢失或字幕结束时间短于音频。
-        if index == len(sentences) - 1:
-            sentence_end = audio_duration_100ns
+        if emitted == valid_count:
+            sentence_end = audio_duration_100ns - tail_100ns
         else:
             sentence_chars = len(cleaned_sentence)
             sentence_duration = max(
-                int(audio_duration_100ns * (sentence_chars / total_chars)),
+                int(speech_total * (sentence_chars / total_chars)),
                 1,
             )
-            sentence_end = min(current_offset + sentence_duration, audio_duration_100ns)
+            sentence_end = min(
+                current_offset + sentence_duration, audio_duration_100ns
+            )
 
         sub_maker.subs.append(cleaned_sentence)
         sub_maker.offset.append((current_offset, sentence_end))
-        current_offset = sentence_end
+        current_offset = sentence_end + gap_100ns
 
     return sub_maker
 
@@ -1002,10 +1049,14 @@ def elevenlabs_tts(
 
                 # 与 Gemini / SiliconFlow 相同：按标点断句分配时长生成字幕
                 sub_maker = ensure_legacy_submaker_fields(SubMaker())
+                lead_in, tail = measure_audio_silences(voice_file)
                 return populate_legacy_submaker_with_full_text(
                     sub_maker=sub_maker,
                     text=text,
                     audio_duration_seconds=audio_duration,
+                    lead_in_seconds=lead_in,
+                    tail_seconds=tail,
+                    gap_seconds=0.3,
                 )
 
             logger.error(
@@ -1067,8 +1118,15 @@ def gemini_tts(
             }
         }
         
+        # Gemini TTS hỗ trợ điều khiển phong cách đọc bằng chỉ dẫn tự nhiên
+        # đặt trước nội dung (vd: giọng ấm áp, chậm rãi kiểu kể chuyện).
+        # Cấu hình qua `gemini_tts_style_prompt` trong config.toml; để trống
+        # thì đọc giọng mặc định.
+        style_prompt = config.app.get("gemini_tts_style_prompt", "").strip()
+        contents = f"{style_prompt}:\n{text}" if style_prompt else text
+
         response = model.generate_content(
-            contents=text,
+            contents=contents,
             generation_config=generation_config
         )
         
@@ -1122,10 +1180,14 @@ def gemini_tts(
         # 计算链路可继续工作。
         sub_maker = ensure_legacy_submaker_fields(SubMaker())
         audio_duration = len(audio_segment) / 1000.0  # 转换为秒
+        lead_in, tail = measure_audio_silences(voice_file)
         return populate_legacy_submaker_with_full_text(
             sub_maker=sub_maker,
             text=text,
             audio_duration_seconds=audio_duration,
+            lead_in_seconds=lead_in,
+            tail_seconds=tail,
+            gap_seconds=0.3,
         )
         
     except ImportError as e:
