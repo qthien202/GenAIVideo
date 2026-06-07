@@ -8,10 +8,12 @@ Fork từ [MoneyPrinterTurbo](https://github.com/harry0703/MoneyPrinterTurbo), t
 
 - ✨ **Frontend React mới**: glassmorphism, responsive mobile, modal Thư viện / Cài đặt
 - ⚙️ **Cài đặt ngay trên web**: chọn LLM provider (18 loại), model, API key — không cần sửa file
-- 🎙️ **Giọng ElevenLabs** (Adam, Rachel, Josh, Bella) bên cạnh Edge TTS miễn phí
-- 🇻🇳 **Preset bối cảnh Việt Nam**: 12 tỉnh thành (Hà Nội, TP.HCM, Cần Thơ, Đà Lạt...) — từ khóa đã khảo sát thật trên Pexels
-- 🔤 **Font phụ đề Be Vietnam Pro**: hết vỡ dấu tiếng Việt; phụ đề viền chữ, không hộp đen
-- 🐛 **Fix lỗi gốc**: task treo vĩnh viễn khi lỗi, search Pexels từng-ký-tự khi LLM lỗi, phụ đề rơi sang Whisper 3GB khi lệch dòng
+- 🎙️ **Giọng đọc xịn**: Gemini TTS (6 giọng, free, có style "đọc postcard") + ElevenLabs (Adam, Rachel...) + Edge TTS miễn phí
+- 🗺️ **Bối cảnh Chủ đề × Địa điểm**: 13 chủ đề (bình minh, hoàng hôn, cánh đồng, hoa, 3 vị chill...) × 19 địa điểm (13 mục Việt Nam + Thụy Sĩ, Nhật, Seoul, Paris, Bali, Thái) — từ khóa khảo sát thật trên Pexels, trộn sẵn modifier viral (aerial, golden hour, cinematic)
+- 🎵 **14 bài nhạc postcard/chill** (Mixkit, free thương mại) — chọn đúng bài, nghe thử ngay trên web
+- 🔤 **Font phụ đề TikTok Sans** — đúng look caption TikTok, đầy đủ dấu tiếng Việt, chữ trắng viền đen không hộp che cảnh
+- ⏱️ **Video tới ~10 phút** (kịch bản 15 đoạn), mỗi cảnh 2–30s
+- 🐛 **Fix lỗi gốc**: task treo vĩnh viễn khi lỗi, search Pexels từng-ký-tự khi LLM lỗi, phụ đề rơi sang Whisper 3GB khi lệch dòng, phụ đề chạy trước giọng đọc
 
 ## Cài đặt
 
@@ -44,38 +46,55 @@ Mở **http://localhost:3000**. API docs: http://localhost:3000/docs
 
 ## Lấy API key (cần trước khi tạo video)
 
-Mở web → nút **⚙️ Cài đặt** → điền 3 nhóm key:
+Mở web → nút **⚙️ Cài đặt** → điền key:
 
 | Key | Bắt buộc | Lấy ở đâu | Free tier |
 |---|---|---|---|
 | **LLM** (Gemini/Groq/...) | ✅ | [Gemini](https://aistudio.google.com/apikey) · [Groq](https://console.groq.com/keys) | Có, đủ dùng |
 | **Pexels** (video nền) | ✅ | [pexels.com/api](https://www.pexels.com/api/) | 200 req/giờ |
-| **ElevenLabs** (giọng xịn) | ❌ | [elevenlabs.io](https://elevenlabs.io/app/settings/api-keys) | 10k ký tự/tháng |
+| **ElevenLabs** (giọng Adam...) | ❌ | [elevenlabs.io](https://elevenlabs.io/app/settings/api-keys) | 10k ký tự/tháng |
 
-- Không có ElevenLabs key vẫn dùng được **giọng Edge TTS miễn phí** (Hoài My, Nam Minh...)
+- Key Gemini dùng cho cả **viết kịch bản lẫn giọng Gemini TTS** — 1 key 2 việc
+- Không có ElevenLabs key vẫn có giọng Gemini (free) + Edge TTS (free vô hạn)
 - Gemini hay dính 429 (hết quota ngày) → đổi model `gemini-2.5-flash-lite` hoặc chuyển qua Groq
 - Key lưu vào `config.toml` (đã gitignore — không lo lộ key khi push)
 
 ## Tạo video
 
-1. Nhập **chủ đề** (vd: *"5 quán cà phê chill ở Cần Thơ"*)
-2. Bấm **✨ AI viết kịch bản** hoặc tự viết / sửa
-3. Chọn **giọng đọc** — 🎙️ Adam (ElevenLabs) hoặc 🇻🇳 giọng Việt miễn phí
-4. Chọn **bối cảnh video nền**:
-   - 🌏 Tự động — AI sinh từ khóa theo chủ đề
-   - 🏙️ Theo thành phố — 12 tỉnh thành VN, mỗi nơi trộn landmark + cảnh phố chill
-   - 🎨 Theo chủ đề — Thiên nhiên / Chill Cafe / Tổng hợp
-5. (Tùy chọn) **Thiết lập nâng cao**: từ khóa tự gõ (tiếng Anh ra nhiều cảnh hơn, tiếng Việt vẫn chạy), độ dài clip, tốc độ đọc, nhạc nền, phụ đề...
-6. **🚀 Tạo video ngay** — theo dõi tiến độ, xong thì xem + tải ngay trên web
+1. Nhập **chủ đề** (vd: *"Cần Thơ về đêm có gì khiến người ta thương?"*)
+2. Kéo **Độ dài kịch bản** (1 đoạn ≈ 40s video, tối đa 15 đoạn ≈ 10 phút) → bấm **✨ AI viết kịch bản** hoặc tự viết
+3. Chọn **giọng đọc**:
+   - ✨ **Gemini** (Puck, Aoede, Charon...) — free, tự nhiên, đọc theo style cấu hình sẵn (mặc định: ấm áp kiểu đọc bưu thiếp)
+   - 🎙️ **ElevenLabs** (Adam, Rachel...) — chất nhất, cần key, 10k ký tự/tháng
+   - 🇻🇳 **Edge** (Hoài My, Nam Minh) — free vô hạn, hợp video dài
+4. Chọn **bối cảnh video nền** = Chủ đề × Địa điểm:
+   - Chủ đề: 🌅 Bình minh / 🌇 Hoàng hôn / 🌾 Cánh đồng / 🌸 Hoa / ☕🌧️🕯️ 3 vị Chill / 🌃 Đêm phố...
+   - Địa điểm: 🇻🇳 13 mục Việt Nam / 🇨🇭 Thụy Sĩ / 🇯🇵 Nhật / 🇫🇷 Paris...
+   - Từ khóa ghép ra hiện ngay bên dưới (🔍), sửa tay được trong Nâng cao
+5. (Nâng cao) **Nhạc nền**: chọn bài nhóm 💌 Postcard, bấm **🔊 nghe thử**; chỉnh độ dài clip, tốc độ đọc, phụ đề...
+6. **🚀 Tạo video ngay** — xong thì xem + tải ngay trên web
 
-Video lưu tại `storage/tasks/<task-id>/`. Tab **📚 Thư viện** xem lại tất cả.
+Video lưu tại `storage/tasks/<task-id>/`. Nút **📚 Thư viện** xem lại tất cả.
 
-> 💡 **Mẹo tiết kiệm quota LLM**: giữ kịch bản đã sinh + chọn preset bối cảnh (thay vì Tự động) → tạo video không tốn request LLM nào.
+> 💡 **Mẹo tiết kiệm quota LLM**: giữ kịch bản đã sinh + chọn bối cảnh preset (thay vì Tự động) → tạo video không tốn request LLM nào.
+
+## Công thức video postcard (đề xuất)
+
+| Thiết lập | Giá trị |
+|---|---|
+| Độ dài mỗi clip | **10s** (khớp ~1 câu đọc; cảnh aerial cần 8-10s mới thấy chuyển động) |
+| Kịch bản | 2–3 đoạn (~1.5–2 phút) |
+| Giọng | Aoede / Charon (Gemini) — style postcard đã set sẵn |
+| Nhạc | Valley Sunset / Slow Walk, âm lượng 15–20% |
+| Nhạc trend TikTok | **Đừng** bake vào video (dính bản quyền) — up xong thêm sound trong app TikTok, thuật toán còn ưu tiên |
+
+Đổi style giọng Gemini: sửa `gemini_tts_style_prompt` trong `config.toml` (vd giọng hào hứng, bí ẩn, đọc tin tức...).
 
 ## Phụ đề
 
-- Font mặc định **Be Vietnam Pro Bold** — đầy đủ dấu tiếng Việt
-- Kiểu chữ trắng + viền đen (không hộp đen che cảnh)
+- Font mặc định **TikTok Sans Bold** — đúng look caption TikTok, đủ dấu tiếng Việt (dự phòng: Be Vietnam Pro Bold)
+- Chữ trắng + viền đen, không hộp đen che cảnh
+- Timeline tự né khoảng lặng đầu/cuối file TTS + nghỉ 0.3s giữa câu → khớp nhịp giọng đọc
 - Muốn đổi font: thả file `.ttf` vào `resource/fonts/` rồi đổi `font_name` khi gọi API
 
 ## Lỗi thường gặp
@@ -84,9 +103,10 @@ Video lưu tại `storage/tasks/<task-id>/`. Tab **📚 Thư viện** xem lại 
 |---|---|
 | Task báo lỗi `pexels_api_keys is not set` | Chưa điền Pexels key → ⚙️ Cài đặt |
 | Lỗi `429 ... exceeded your current quota` | LLM hết quota → đổi model nhẹ hơn / qua Groq / điền từ khóa tay |
+| Giọng Gemini lỗi / không ra audio | Gemini TTS hết lượt ngày (quota preview hẻo) → đổi giọng Edge |
 | Modal Cài đặt trống trơn | Backend chưa chạy → bật `python main.py` rồi mở lại modal |
-| Sửa code backend xong không ăn | Restart backend (Ctrl+C → chạy lại); riêng key/config thì ăn ngay không cần |
-| Phụ đề vỡ dấu (video cũ) | Tạo trước khi fix font → tạo video mới |
+| Sửa code backend xong không ăn | Restart backend (Ctrl+C → chạy lại); riêng key/config thì ăn ngay |
+| Form gửi giá trị cũ (font, params...) | Tab mở lâu giữ state cũ → **Cmd+Shift+R** hard refresh |
 
 ## Cập nhật code mới từ repo gốc
 
