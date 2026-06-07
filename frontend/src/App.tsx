@@ -1,17 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import CreateView from "./components/CreateView";
 import LibraryView from "./components/LibraryView";
 import SettingsView from "./components/SettingsView";
 
-type Tab = "create" | "library";
-
-const TABS: [Tab, string, string][] = [
-  ["create", "✨", "Tạo video"],
-  ["library", "📚", "Thư viện"],
-];
-
 export default function App() {
-  const [tab, setTab] = useState<Tab>("create");
+  const [showLibrary, setShowLibrary] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
   return (
@@ -35,39 +28,38 @@ export default function App() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Nav: chia đều trên mobile, pill gọn trên desktop */}
-          <nav className="glass-pill flex-1 sm:flex-none grid grid-cols-2 sm:flex gap-1 p-1.5">
-            {TABS.map(([key, icon, label]) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition ${
-                  tab === key
-                    ? "bg-white/15 text-white shadow ring-1 ring-white/15"
-                    : "text-zinc-400 hover:text-zinc-100 hover:bg-white/5"
-                }`}
-              >
-                <span>{icon}</span>
-                <span>{label}</span>
-              </button>
-            ))}
-          </nav>
-
-          {/* Nút mở modal cài đặt */}
+        {/* Menu: 2 nút mở modal — chia đều trên mobile */}
+        <nav className="glass-pill grid grid-cols-2 sm:flex gap-1 p-1.5">
+          <button
+            onClick={() => setShowLibrary(true)}
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/10 transition"
+          >
+            <span>📚</span>
+            <span>Thư viện</span>
+          </button>
           <button
             onClick={() => setShowSettings(true)}
-            className="glass-pill p-3 sm:p-2.5 rounded-2xl text-lg leading-none text-zinc-300 hover:text-white hover:bg-white/10 transition shrink-0"
-            title="Cài đặt"
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/10 transition"
           >
-            ⚙️
+            <span>⚙️</span>
+            <span>Cài đặt</span>
           </button>
-        </div>
+        </nav>
       </header>
 
-      {tab === "create" ? <CreateView /> : <LibraryView />}
+      <CreateView />
 
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showLibrary && (
+        <Modal title="📚 Thư viện" wide onClose={() => setShowLibrary(false)}>
+          <LibraryView />
+        </Modal>
+      )}
+
+      {showSettings && (
+        <Modal title="⚙️ Cài đặt" onClose={() => setShowSettings(false)}>
+          <SettingsView />
+        </Modal>
+      )}
 
       <footer className="mt-12 text-center text-xs text-zinc-600">
         Backend:{" "}
@@ -80,7 +72,17 @@ export default function App() {
   );
 }
 
-function SettingsModal({ onClose }: { onClose: () => void }) {
+function Modal({
+  title,
+  wide,
+  onClose,
+  children,
+}: {
+  title: string;
+  wide?: boolean;
+  onClose: () => void;
+  children: ReactNode;
+}) {
   // Đóng bằng phím ESC + khóa scroll trang nền khi modal mở
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -98,12 +100,12 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="glass w-full sm:max-w-2xl max-h-[92dvh] sm:max-h-[88dvh] overflow-y-auto rounded-t-3xl rounded-b-none sm:rounded-3xl"
+        className={`glass w-full ${wide ? "sm:max-w-5xl" : "sm:max-w-2xl"} max-h-[92dvh] sm:max-h-[88dvh] overflow-y-auto rounded-t-3xl rounded-b-none sm:rounded-3xl`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Thanh tiêu đề dính trên cùng */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 sm:px-6 py-4 border-b border-white/10 bg-zinc-950/60 backdrop-blur-xl rounded-t-3xl">
-          <h2 className="font-semibold flex items-center gap-2">⚙️ Cài đặt</h2>
+          <h2 className="font-semibold flex items-center gap-2">{title}</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition"
@@ -112,9 +114,7 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
             ✕
           </button>
         </div>
-        <div className="p-5 sm:p-6">
-          <SettingsView />
-        </div>
+        <div className="p-5 sm:p-6">{children}</div>
       </div>
     </div>
   );
