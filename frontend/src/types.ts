@@ -57,6 +57,12 @@ export const DEFAULT_PARAMS: VideoParams = {
 };
 
 export const VOICES: { value: string; label: string }[] = [
+  // ElevenLabs (cần API key trong Cài đặt) — giọng đa ngôn ngữ, nói được cả tiếng Việt
+  { value: "elevenlabs:pNInz6obpgDQGcFmaJgB:Adam-Male", label: "🎙️ Adam (ElevenLabs) — Nam trầm" },
+  { value: "elevenlabs:21m00Tcm4TlvDq8ikWAM:Rachel-Female", label: "🎙️ Rachel (ElevenLabs) — Nữ" },
+  { value: "elevenlabs:TxGEqnHWrfWFTfGW9XjX:Josh-Male", label: "🎙️ Josh (ElevenLabs) — Nam trẻ" },
+  { value: "elevenlabs:EXAVITQu4vr4xnSDxMaL:Bella-Female", label: "🎙️ Bella (ElevenLabs) — Nữ nhẹ nhàng" },
+  // Edge TTS — miễn phí, không cần key
   { value: "vi-VN-HoaiMyNeural-Female", label: "🇻🇳 Hoài My — Nữ" },
   { value: "vi-VN-NamMinhNeural-Male", label: "🇻🇳 Nam Minh — Nam" },
   { value: "en-US-JennyNeural-Female", label: "🇺🇸 Jenny — Female" },

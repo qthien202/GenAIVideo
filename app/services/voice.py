@@ -195,6 +195,11 @@ def is_gemini_voice(voice_name: str):
     return voice_name.startswith("gemini:")
 
 
+def is_elevenlabs_voice(voice_name: str):
+    """检查是否是ElevenLabs的声音"""
+    return voice_name.startswith("elevenlabs:")
+
+
 def is_mimo_voice(voice_name: str):
     """检查是否是 Xiaomi MiMo TTS 的声音"""
     return voice_name.startswith("mimo:")
@@ -347,6 +352,16 @@ def tts(
             return gemini_tts(text, voice, voice_rate, voice_file, voice_volume)
         else:
             logger.error(f"Invalid gemini voice name format: {voice_name}")
+            return None
+    elif is_elevenlabs_voice(voice_name):
+        # 从voice_name中提取voice_id
+        # 格式: elevenlabs:<voice_id>:<display>-Gender
+        parts = voice_name.split(":")
+        if len(parts) >= 2:
+            voice_id = parts[1]
+            return elevenlabs_tts(text, voice_id, voice_rate, voice_file, voice_volume)
+        else:
+            logger.error(f"Invalid elevenlabs voice name format: {voice_name}")
             return None
     elif is_mimo_voice(voice_name):
         # 从voice_name中提取声音名称
@@ -919,6 +934,85 @@ def azure_tts_v2(text: str, voice_name: str, voice_file: str) -> Union[SubMaker,
             logger.info(f"completed, output file: {voice_file}")
         except Exception as e:
             logger.error(f"failed, error: {str(e)}")
+    return None
+
+
+def elevenlabs_tts(
+    text: str,
+    voice_id: str,
+    voice_rate: float,
+    voice_file: str,
+    voice_volume: float = 1.0,
+) -> Union[SubMaker, None]:
+    """
+    使用ElevenLabs API生成语音
+
+    Args:
+        text: 要转换为语音的文本
+        voice_id: ElevenLabs voice id，如 "pNInz6obpgDQGcFmaJgB" (Adam)
+        voice_rate: 语音速度，ElevenLabs 支持范围 [0.7, 1.2]
+        voice_file: 输出的音频文件路径
+        voice_volume: 音量（ElevenLabs API 不支持，忽略）
+
+    Returns:
+        SubMaker对象或None
+    """
+    text = text.strip()
+    api_key = config.app.get("elevenlabs_api_key", "")
+    if not api_key:
+        logger.error("ElevenLabs API key is not set")
+        return None
+
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    # eleven_multilingual_v2 hỗ trợ ~30 ngôn ngữ (gồm tiếng Việt)
+    model_id = config.app.get("elevenlabs_model_id", "eleven_multilingual_v2")
+    speed = max(0.7, min(1.2, voice_rate))
+
+    payload = {
+        "text": text,
+        "model_id": model_id,
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.75,
+            "speed": speed,
+        },
+    }
+    headers = {
+        "xi-api-key": api_key,
+        "Content-Type": "application/json",
+        "Accept": "audio/mpeg",
+    }
+
+    for i in range(3):  # 尝试3次
+        try:
+            logger.info(
+                f"start elevenlabs tts, voice_id: {voice_id}, model: {model_id}, try: {i + 1}"
+            )
+            response = requests.post(url, json=payload, headers=headers, timeout=180)
+
+            if response.status_code == 200:
+                with open(voice_file, "wb") as f:
+                    f.write(response.content)
+
+                from moviepy import AudioFileClip
+
+                audio_clip = AudioFileClip(voice_file)
+                audio_duration = audio_clip.duration
+                audio_clip.close()
+
+                # 与 Gemini / SiliconFlow 相同：按标点断句分配时长生成字幕
+                sub_maker = ensure_legacy_submaker_fields(SubMaker())
+                return populate_legacy_submaker_with_full_text(
+                    sub_maker=sub_maker,
+                    text=text,
+                    audio_duration_seconds=audio_duration,
+                )
+
+            logger.error(
+                f"elevenlabs tts failed: {response.status_code}, {response.text[:300]}"
+            )
+        except Exception as e:
+            logger.error(f"elevenlabs tts failed: {str(e)}")
     return None
 
 

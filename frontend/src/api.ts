@@ -62,6 +62,7 @@ export interface AppSettings {
   providers: Record<string, ProviderConfig>;
   pexels_api_keys: string[];
   pixabay_api_keys: string[];
+  elevenlabs_api_key: string;
 }
 
 export function getSettings(): Promise<AppSettings> {
@@ -75,6 +76,7 @@ export function saveSettings(body: {
   base_url: string;
   pexels_api_keys: string[];
   pixabay_api_keys: string[];
+  elevenlabs_api_key: string;
 }): Promise<void> {
   return request("/api/v1/config", {
     method: "PUT",

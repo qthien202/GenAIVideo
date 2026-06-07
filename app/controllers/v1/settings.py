@@ -55,6 +55,7 @@ def get_settings(request: Request):
         "providers": providers,
         "pexels_api_keys": _to_key_list(config.app.get("pexels_api_keys")),
         "pixabay_api_keys": _to_key_list(config.app.get("pixabay_api_keys")),
+        "elevenlabs_api_key": config.app.get("elevenlabs_api_key", ""),
     }
     return utils.get_response(200, response)
 
@@ -66,6 +67,7 @@ class SaveSettingsRequest(BaseModel):
     base_url: str = ""
     pexels_api_keys: List[str] = []
     pixabay_api_keys: List[str] = []
+    elevenlabs_api_key: str = ""
 
 
 @router.put("/config", summary="Update LLM & material provider settings")
@@ -80,6 +82,7 @@ def save_settings(request: Request, body: SaveSettingsRequest):
     config.app[f"{provider}_base_url"] = body.base_url.strip()
     config.app["pexels_api_keys"] = [k.strip() for k in body.pexels_api_keys if k.strip()]
     config.app["pixabay_api_keys"] = [k.strip() for k in body.pixabay_api_keys if k.strip()]
+    config.app["elevenlabs_api_key"] = body.elevenlabs_api_key.strip()
     config.save_config()
 
     return utils.get_response(200)

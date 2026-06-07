@@ -48,6 +48,7 @@ export default function SettingsView() {
   const [baseUrl, setBaseUrl] = useState("");
   const [pexelsKeys, setPexelsKeys] = useState("");
   const [pixabayKeys, setPixabayKeys] = useState("");
+  const [elevenlabsKey, setElevenlabsKey] = useState("");
   const [showKeys, setShowKeys] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -63,6 +64,7 @@ export default function SettingsView() {
         applyProvider(s, s.llm_provider);
         setPexelsKeys(s.pexels_api_keys.join(", "));
         setPixabayKeys(s.pixabay_api_keys.join(", "));
+        setElevenlabsKey(s.elevenlabs_api_key ?? "");
       })
       .catch((e: any) => setError(`Không tải được cài đặt: ${e.message}`))
       .finally(() => setLoading(false));
@@ -115,6 +117,7 @@ export default function SettingsView() {
         base_url: baseUrl,
         pexels_api_keys: pexelsKeys.split(",").map((k) => k.trim()).filter(Boolean),
         pixabay_api_keys: pixabayKeys.split(",").map((k) => k.trim()).filter(Boolean),
+        elevenlabs_api_key: elevenlabsKey.trim(),
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -280,6 +283,35 @@ export default function SettingsView() {
             placeholder="key1, key2, ..."
             value={pixabayKeys}
             onChange={(e) => setPixabayKeys(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Voice keys */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 sm:p-6 space-y-5">
+        <h2 className="font-semibold flex items-center gap-2">🎙️ Giọng đọc</h2>
+        <p className="text-xs text-zinc-500 -mt-3">
+          Giọng Edge TTS (Hoài My, Nam Minh...) miễn phí không cần key. Muốn
+          dùng giọng ElevenLabs (Adam, Rachel...) thì điền key — free tier
+          10.000 ký tự/tháng.
+        </p>
+        <div>
+          <label className="label">
+            ElevenLabs API key —{" "}
+            <a
+              href="https://elevenlabs.io/app/settings/api-keys"
+              target="_blank"
+              className="text-cyan-400 underline normal-case"
+            >
+              lấy key
+            </a>
+          </label>
+          <input
+            className="input"
+            type={showKeys ? "text" : "password"}
+            placeholder="sk_..."
+            value={elevenlabsKey}
+            onChange={(e) => setElevenlabsKey(e.target.value)}
           />
         </div>
       </div>
