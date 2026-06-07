@@ -132,9 +132,9 @@ export default function SettingsView() {
   const suggestions = MODEL_SUGGESTIONS[provider] ?? [];
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5 sm:space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* LLM */}
-      <div className="glass p-5 sm:p-6 space-y-5">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 sm:p-6 space-y-5">
         <h2 className="font-semibold flex items-center gap-2">🧠 Mô hình AI (LLM)</h2>
         <p className="text-xs text-zinc-500 -mt-3">
           Dùng để viết kịch bản và sinh từ khóa tìm video. Lưu vào{" "}
@@ -238,7 +238,7 @@ export default function SettingsView() {
       </div>
 
       {/* Video material keys */}
-      <div className="glass p-5 sm:p-6 space-y-5">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 sm:p-6 space-y-5">
         <h2 className="font-semibold flex items-center gap-2">🎞️ Nguồn video nền</h2>
         <p className="text-xs text-zinc-500 -mt-3">
           Cần ít nhất 1 key (đăng ký miễn phí). Nhiều key cách nhau bằng dấu
