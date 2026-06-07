@@ -11,36 +11,84 @@ import {
 } from "../types";
 
 // Preset bối cảnh: điền sẵn từ khóa tìm video nền trên Pexels/Pixabay.
-// Từ khóa đã khảo sát thực tế trên Pexels — mỗi mục đều có ~2.000+ video dọc 9:16.
-type ScenePreset = { label: string; terms: string; group?: string };
+// Từ khóa đã khảo sát thực tế trên Pexels — mỗi tổ hợp đều có 2.000-8.000 video dọc 9:16.
+// Chủ đề × Địa điểm tách riêng, ghép lại thành từ khóa tìm kiếm.
+// Các modifier "aerial / golden hour / slow motion / cinematic" là kiểu cảnh
+// hay viral trên TikTok nên được trộn sẵn vào core terms.
 
-const CITY = "🏙️ Theo thành phố";
-const THEME = "🎨 Theo chủ đề";
+type SceneTheme = { label: string; terms: string[] };
 
-const SCENE_PRESETS: ScenePreset[] = [
-  { label: "🌏 Tự động — AI chọn theo chủ đề", terms: "" },
-  // Thành phố — mỗi nơi trộn landmark + cảnh phố chill (đêm lên đèn, aerial, cafe)
-  { group: CITY, label: "🇻🇳 Hà Nội", terms: "hanoi, hanoi old quarter, hanoi night, hanoi cafe, hanoi aerial" },
-  { group: CITY, label: "🇻🇳 TP. Hồ Chí Minh", terms: "ho chi minh city, saigon street, saigon night, saigon aerial, vietnam rooftop" },
-  { group: CITY, label: "🇻🇳 Đà Nẵng", terms: "da nang, da nang beach, da nang night, da nang aerial, vietnam bridge" },
-  { group: CITY, label: "🇻🇳 Hội An", terms: "hoi an, hoi an lantern, hoi an night, hoi an old town, vietnam river" },
-  { group: CITY, label: "🇻🇳 Huế", terms: "hue vietnam, hue aerial, hue night, vietnam citadel, vietnam temple" },
-  { group: CITY, label: "🇻🇳 Cần Thơ", terms: "can tho, can tho aerial, can tho night, mekong river, floating market vietnam" },
-  { group: CITY, label: "🇻🇳 Đà Lạt", terms: "da lat, da lat night, da lat cafe, da lat vietnam, vietnam mountains" },
-  { group: CITY, label: "🇻🇳 Nha Trang", terms: "nha trang, nha trang beach, nha trang night, nha trang aerial, vietnam island" },
-  { group: CITY, label: "🇻🇳 Sa Pa", terms: "sapa, sapa aerial, vietnam rice field, vietnam mountains, rice terraces" },
-  { group: CITY, label: "🇻🇳 Phú Quốc", terms: "phu quoc, phu quoc beach, phu quoc aerial, vietnam beach sunset, vietnam island" },
-  { group: CITY, label: "🇻🇳 Vũng Tàu", terms: "vung tau, vung tau aerial, vung tau night, vietnam coast, vietnam city beach" },
-  { group: CITY, label: "🇻🇳 Hạ Long", terms: "ha long bay, halong bay vietnam, ha long aerial, vietnam islands, vietnam boat" },
-  // Chủ đề
-  { group: THEME, label: "🇻🇳 Thiên nhiên", terms: "ha long bay, vietnam rice field, mekong river, da nang, vietnam nature" },
-  { group: THEME, label: "🇻🇳 Chill / Cafe", terms: "vietnam coffee, hoi an, hanoi cafe, saigon night, vietnam rain" },
-  { group: THEME, label: "🇻🇳 Tổng hợp", terms: "vietnam, hanoi, saigon street, ha long bay, hoi an" },
+const THEMES: SceneTheme[] = [
+  { label: "🌏 Tự động — AI chọn theo chủ đề", terms: [] },
+  { label: "🌅 Bình minh", terms: ["sunrise aerial", "sunrise golden hour", "morning mist"] },
+  { label: "🌇 Hoàng hôn", terms: ["sunset aerial", "sunset golden hour", "sunset silhouette"] },
+  { label: "🌆 Chiều tà", terms: ["dusk city", "twilight", "evening golden hour"] },
+  { label: "🌾 Cánh đồng", terms: ["field aerial", "rice field", "meadow golden hour"] },
+  { label: "🌸 Hoa", terms: ["flower field", "flowers blooming", "cherry blossom"] },
+  { label: "🏙️ Đường phố", terms: ["street cinematic", "city street", "crosswalk aerial"] },
+  { label: "🌃 Đêm thành phố", terms: ["city lights night", "neon street", "night aerial"] },
+  { label: "☕ Chill — Cafe", terms: ["coffee shop cozy", "cafe window", "pouring coffee slow motion"] },
+  { label: "🌧️ Chill — Mưa", terms: ["rain window", "rain street night", "rain umbrella"] },
+  { label: "🕯️ Chill — Cozy trong nhà", terms: ["cozy room candle", "cozy bed window", "reading book cozy"] },
+  { label: "🌊 Biển", terms: ["ocean waves slow", "beach aerial", "beach sunset"] },
+  { label: "⛰️ Núi non", terms: ["mountain aerial", "mountain mist", "alpine landscape"] },
 ];
+
+type SceneLocation = { label: string; key: string; curated?: string };
+
+const LOCATIONS: SceneLocation[] = [
+  { label: "🌍 Không cố định", key: "" },
+  // Việt Nam — curated dùng khi chủ đề để Tự động
+  { label: "🇻🇳 Việt Nam (chung)", key: "vietnam", curated: "vietnam, hanoi, saigon street, ha long bay, hoi an" },
+  { label: "🇻🇳 Hà Nội", key: "hanoi", curated: "hanoi, hanoi old quarter, hanoi night, hanoi cafe, hanoi aerial" },
+  { label: "🇻🇳 TP. Hồ Chí Minh", key: "saigon", curated: "ho chi minh city, saigon street, saigon night, saigon aerial, vietnam rooftop" },
+  { label: "🇻🇳 Đà Nẵng", key: "da nang", curated: "da nang, da nang beach, da nang night, da nang aerial, vietnam bridge" },
+  { label: "🇻🇳 Hội An", key: "hoi an", curated: "hoi an, hoi an lantern, hoi an night, hoi an old town, vietnam river" },
+  { label: "🇻🇳 Huế", key: "hue", curated: "hue vietnam, hue aerial, hue night, vietnam citadel, vietnam temple" },
+  { label: "🇻🇳 Cần Thơ", key: "can tho", curated: "can tho, can tho aerial, can tho night, mekong river, floating market vietnam" },
+  { label: "🇻🇳 Đà Lạt", key: "da lat", curated: "da lat, da lat night, da lat cafe, da lat vietnam, vietnam mountains" },
+  { label: "🇻🇳 Nha Trang", key: "nha trang", curated: "nha trang, nha trang beach, nha trang night, nha trang aerial, vietnam island" },
+  { label: "🇻🇳 Sa Pa", key: "sapa", curated: "sapa, sapa aerial, vietnam rice field, vietnam mountains, rice terraces" },
+  { label: "🇻🇳 Phú Quốc", key: "phu quoc", curated: "phu quoc, phu quoc beach, phu quoc aerial, vietnam beach sunset, vietnam island" },
+  { label: "🇻🇳 Vũng Tàu", key: "vung tau", curated: "vung tau, vung tau aerial, vung tau night, vietnam coast, vietnam city beach" },
+  { label: "🇻🇳 Hạ Long", key: "ha long bay", curated: "ha long bay, halong bay vietnam, ha long aerial, vietnam islands, vietnam boat" },
+  // Quốc tế
+  { label: "🇨🇭 Thụy Sĩ", key: "switzerland", curated: "switzerland, switzerland alps, switzerland aerial, swiss village, switzerland lake" },
+  { label: "🇯🇵 Nhật Bản", key: "japan", curated: "japan, japan street, tokyo night, kyoto, japan cherry blossom" },
+  { label: "🇰🇷 Seoul", key: "seoul", curated: "seoul, seoul street, seoul night, korea city, han river" },
+  { label: "🇫🇷 Paris", key: "paris", curated: "paris, paris street, eiffel tower, paris cafe, paris night" },
+  { label: "🇮🇩 Bali", key: "bali", curated: "bali, bali beach, bali rice terrace, bali temple, bali sunset" },
+  { label: "🇹🇭 Thái Lan", key: "thailand", curated: "thailand, bangkok street, thailand temple, thailand beach, bangkok night" },
+];
+
+/** Ghép chủ đề × địa điểm thành chuỗi từ khóa tìm video */
+function buildSceneTerms(theme: SceneTheme, loc: SceneLocation): string {
+  const hasTheme = theme.terms.length > 0;
+  if (!hasTheme && !loc.key) return ""; // cả hai Tự động → AI tự sinh
+  if (!hasTheme) return loc.curated ?? loc.key;
+  if (!loc.key) return theme.terms.join(", ");
+  // Có cả hai: ghép "địa điểm + chủ đề" + giữ 1 từ khóa địa điểm thuần cho đa dạng
+  const combos = theme.terms.map((t) => `${loc.key} ${t.split(" ")[0]}`);
+  return [...new Set([...combos, `${loc.key} aerial`])].join(", ");
+}
+
+/** "postcard-slow-walk.mp3" → "Slow Walk" */
+function prettyMusicName(file: string): string {
+  return file
+    .replace(/^postcard-/, "")
+    .replace(/\.mp3$/i, "")
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
 
 export default function CreateView() {
   const [params, setParams] = useState<VideoParams>({ ...DEFAULT_PARAMS });
-  const [scenePreset, setScenePreset] = useState(0);
+  const [themeIdx, setThemeIdx] = useState(0);
+  const [locIdx, setLocIdx] = useState(0);
+  const [musics, setMusics] = useState<api.MusicFile[]>([]);
+  const [previewing, setPreviewing] = useState(false);
+  const previewRef = useRef<HTMLAudioElement | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [scriptLoading, setScriptLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -53,6 +101,33 @@ export default function CreateView() {
 
   const set = <K extends keyof VideoParams>(key: K, value: VideoParams[K]) =>
     setParams((p) => ({ ...p, [key]: value }));
+
+  // Nạp danh sách nhạc nền + dọn audio preview khi unmount
+  useEffect(() => {
+    api.getMusics().then((res) => setMusics(res.files || [])).catch(() => {});
+    return () => stopPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const stopPreview = () => {
+    previewRef.current?.pause();
+    previewRef.current = null;
+    setPreviewing(false);
+  };
+
+  const togglePreview = () => {
+    if (previewing) {
+      stopPreview();
+      return;
+    }
+    if (!params.bgm_file) return;
+    const audio = new Audio(api.toMusicUrl(params.bgm_file));
+    audio.volume = 0.8;
+    audio.onended = () => setPreviewing(false);
+    audio.play();
+    previewRef.current = audio;
+    setPreviewing(true);
+  };
 
   // Poll tiến độ task
   useEffect(() => {
@@ -217,42 +292,51 @@ export default function CreateView() {
           </div>
         </div>
 
-        {/* Bối cảnh video nền */}
+        {/* Bối cảnh video nền: Chủ đề × Địa điểm */}
         <div>
           <label className="label">
             Bối cảnh video nền{" "}
             <span className="text-zinc-600 normal-case">
-              (chọn preset → tự điền từ khóa, sửa được trong Nâng cao)
+              (chủ đề × địa điểm → tự điền từ khóa, sửa được trong Nâng cao)
             </span>
           </label>
-          <select
-            className="input"
-            value={scenePreset}
-            onChange={(e) => {
-              const idx = +e.target.value;
-              setScenePreset(idx);
-              set("video_terms", SCENE_PRESETS[idx].terms);
-            }}
-          >
-            {SCENE_PRESETS.map((p, i) =>
-              p.group ? null : (
-                <option key={p.label} value={i}>
-                  {p.label}
+          <div className="grid sm:grid-cols-2 gap-2">
+            <select
+              className="input"
+              value={themeIdx}
+              onChange={(e) => {
+                const idx = +e.target.value;
+                setThemeIdx(idx);
+                set("video_terms", buildSceneTerms(THEMES[idx], LOCATIONS[locIdx]));
+              }}
+            >
+              {THEMES.map((t, i) => (
+                <option key={t.label} value={i}>
+                  {t.label}
                 </option>
-              )
-            )}
-            {[CITY, THEME].map((group) => (
-              <optgroup key={group} label={group}>
-                {SCENE_PRESETS.map((p, i) =>
-                  p.group === group ? (
-                    <option key={p.label} value={i}>
-                      {p.label}
-                    </option>
-                  ) : null
-                )}
-              </optgroup>
-            ))}
-          </select>
+              ))}
+            </select>
+            <select
+              className="input"
+              value={locIdx}
+              onChange={(e) => {
+                const idx = +e.target.value;
+                setLocIdx(idx);
+                set("video_terms", buildSceneTerms(THEMES[themeIdx], LOCATIONS[idx]));
+              }}
+            >
+              {LOCATIONS.map((l, i) => (
+                <option key={l.label} value={i}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {params.video_terms && (
+            <p className="text-xs text-zinc-500 mt-1.5 truncate" title={params.video_terms}>
+              🔍 {params.video_terms}
+            </p>
+          )}
         </div>
 
         {/* Nâng cao */}
@@ -298,10 +382,24 @@ export default function CreateView() {
                 <input
                   type="range"
                   min={2}
-                  max={10}
+                  max={30}
                   className="w-full accent-cyan-500"
                   value={params.video_clip_duration}
                   onChange={(e) => set("video_clip_duration", +e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="label">
+                  Độ dài kịch bản: {params.paragraph_number} đoạn (≈
+                  {Math.round(params.paragraph_number * 0.7 * 10) / 10} phút)
+                </label>
+                <input
+                  type="range"
+                  min={1}
+                  max={15}
+                  className="w-full accent-cyan-500"
+                  value={params.paragraph_number}
+                  onChange={(e) => set("paragraph_number", +e.target.value)}
                 />
               </div>
               <div>
@@ -345,14 +443,56 @@ export default function CreateView() {
               </div>
               <div>
                 <label className="label">Nhạc nền</label>
-                <select
-                  className="input"
-                  value={params.bgm_type}
-                  onChange={(e) => set("bgm_type", e.target.value)}
-                >
-                  <option value="random">🎲 Ngẫu nhiên</option>
-                  <option value="">🔇 Không nhạc</option>
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    className="input"
+                    value={params.bgm_file || params.bgm_type}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "random" || v === "") {
+                        set("bgm_type", v);
+                        set("bgm_file", "");
+                      } else {
+                        set("bgm_type", "custom");
+                        set("bgm_file", v);
+                      }
+                      stopPreview();
+                    }}
+                  >
+                    <option value="random">🎲 Ngẫu nhiên</option>
+                    <option value="">🔇 Không nhạc</option>
+                    {musics.some((m) => m.file.startsWith("postcard-")) && (
+                      <optgroup label="💌 Postcard / Chill">
+                        {musics
+                          .filter((m) => m.file.startsWith("postcard-"))
+                          .map((m) => (
+                            <option key={m.file} value={m.file}>
+                              {prettyMusicName(m.file)}
+                            </option>
+                          ))}
+                      </optgroup>
+                    )}
+                    {musics.some((m) => !m.file.startsWith("postcard-")) && (
+                      <optgroup label="🎵 Khác">
+                        {musics
+                          .filter((m) => !m.file.startsWith("postcard-"))
+                          .map((m) => (
+                            <option key={m.file} value={m.file}>
+                              {prettyMusicName(m.file)}
+                            </option>
+                          ))}
+                      </optgroup>
+                    )}
+                  </select>
+                  <button
+                    className="btn-ghost px-3 shrink-0"
+                    disabled={!params.bgm_file}
+                    onClick={togglePreview}
+                    title={previewing ? "Dừng nghe thử" : "Nghe thử"}
+                  >
+                    {previewing ? "⏹" : "🔊"}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="label">Phụ đề</label>

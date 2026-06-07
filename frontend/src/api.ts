@@ -51,6 +51,21 @@ export function generateTerms(body: {
   return request("/api/v1/terms", { method: "POST", body: JSON.stringify(body) });
 }
 
+export interface MusicFile {
+  name: string;
+  size: number;
+  file: string;
+}
+
+export function getMusics(): Promise<{ files: MusicFile[] }> {
+  return request("/api/v1/musics");
+}
+
+/** URL stream nhạc nền để nghe thử trên trình duyệt */
+export function toMusicUrl(file: string): string {
+  return `/api/v1/musics/${encodeURIComponent(file)}`;
+}
+
 export interface ProviderConfig {
   api_key: string;
   model_name: string;
