@@ -93,7 +93,7 @@ export default function CreateView() {
   return (
     <div className="grid lg:grid-cols-[1fr_420px] gap-6 items-start">
       {/* ===== Cột trái: Form ===== */}
-      <div className="glass p-6 space-y-5">
+      <div className="glass p-5 sm:p-6 space-y-5">
         {/* Chủ đề */}
         <div>
           <label className="label">Chủ đề video</label>
@@ -328,7 +328,7 @@ export default function CreateView() {
       </div>
 
       {/* ===== Cột phải: Tiến độ & Preview ===== */}
-      <div className="glass p-6 lg:sticky lg:top-6">
+      <div className="glass p-5 sm:p-6 lg:sticky lg:top-6">
         <h2 className="font-semibold mb-4 flex items-center gap-2">
           📺 Kết quả
         </h2>

@@ -5,22 +5,28 @@ import SettingsView from "./components/SettingsView";
 
 type Tab = "create" | "library" | "settings";
 
+const TABS: [Tab, string, string][] = [
+  ["create", "✨", "Tạo video"],
+  ["library", "📚", "Thư viện"],
+  ["settings", "⚙️", "Cài đặt"],
+];
+
 export default function App() {
   const [tab, setTab] = useState<Tab>("create");
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
       {/* Header */}
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-xl shadow-lg shadow-violet-900/50">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-xl shadow-lg shadow-violet-900/50 ring-1 ring-white/20">
             🎬
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight">
-              MoneyPrinter{" "}
+              GenAI{" "}
               <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
-                Studio
+                Video
               </span>
             </h1>
             <p className="text-xs text-zinc-500 -mt-0.5">
@@ -29,24 +35,20 @@ export default function App() {
           </div>
         </div>
 
-        <nav className="flex gap-1 p-1 rounded-xl bg-zinc-900/80 border border-zinc-800">
-          {(
-            [
-              ["create", "✨ Tạo video"],
-              ["library", "📚 Thư viện"],
-              ["settings", "⚙️ Cài đặt"],
-            ] as [Tab, string][]
-          ).map(([key, label]) => (
+        {/* Nav: full-width 3 cột trên mobile, pill gọn trên desktop */}
+        <nav className="glass-pill grid grid-cols-3 sm:flex gap-1 p-1.5">
+          {TABS.map(([key, icon, label]) => (
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-sm font-medium transition ${
                 tab === key
-                  ? "bg-zinc-700/80 text-white shadow"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-white/15 text-white shadow ring-1 ring-white/15"
+                  : "text-zinc-400 hover:text-zinc-100 hover:bg-white/5"
               }`}
             >
-              {label}
+              <span>{icon}</span>
+              <span>{label}</span>
             </button>
           ))}
         </nav>
@@ -65,7 +67,7 @@ export default function App() {
         <a href="/docs" target="_blank" className="underline hover:text-zinc-400">
           API docs
         </a>{" "}
-        · MoneyPrinterTurbo
+        · GenAIVideo
       </footer>
     </div>
   );
