@@ -10,8 +10,37 @@ import {
   type VideoParams,
 } from "../types";
 
+// Preset bối cảnh: điền sẵn từ khóa tìm video nền trên Pexels/Pixabay.
+// Từ khóa đã khảo sát thực tế trên Pexels — mỗi mục đều có ~2.000+ video dọc 9:16.
+type ScenePreset = { label: string; terms: string; group?: string };
+
+const CITY = "🏙️ Theo thành phố";
+const THEME = "🎨 Theo chủ đề";
+
+const SCENE_PRESETS: ScenePreset[] = [
+  { label: "🌏 Tự động — AI chọn theo chủ đề", terms: "" },
+  // Thành phố — mỗi nơi trộn landmark + cảnh phố chill (đêm lên đèn, aerial, cafe)
+  { group: CITY, label: "🇻🇳 Hà Nội", terms: "hanoi, hanoi old quarter, hanoi night, hanoi cafe, hanoi aerial" },
+  { group: CITY, label: "🇻🇳 TP. Hồ Chí Minh", terms: "ho chi minh city, saigon street, saigon night, saigon aerial, vietnam rooftop" },
+  { group: CITY, label: "🇻🇳 Đà Nẵng", terms: "da nang, da nang beach, da nang night, da nang aerial, vietnam bridge" },
+  { group: CITY, label: "🇻🇳 Hội An", terms: "hoi an, hoi an lantern, hoi an night, hoi an old town, vietnam river" },
+  { group: CITY, label: "🇻🇳 Huế", terms: "hue vietnam, hue aerial, hue night, vietnam citadel, vietnam temple" },
+  { group: CITY, label: "🇻🇳 Cần Thơ", terms: "can tho, can tho aerial, can tho night, mekong river, floating market vietnam" },
+  { group: CITY, label: "🇻🇳 Đà Lạt", terms: "da lat, da lat night, da lat cafe, da lat vietnam, vietnam mountains" },
+  { group: CITY, label: "🇻🇳 Nha Trang", terms: "nha trang, nha trang beach, nha trang night, nha trang aerial, vietnam island" },
+  { group: CITY, label: "🇻🇳 Sa Pa", terms: "sapa, sapa aerial, vietnam rice field, vietnam mountains, rice terraces" },
+  { group: CITY, label: "🇻🇳 Phú Quốc", terms: "phu quoc, phu quoc beach, phu quoc aerial, vietnam beach sunset, vietnam island" },
+  { group: CITY, label: "🇻🇳 Vũng Tàu", terms: "vung tau, vung tau aerial, vung tau night, vietnam coast, vietnam city beach" },
+  { group: CITY, label: "🇻🇳 Hạ Long", terms: "ha long bay, halong bay vietnam, ha long aerial, vietnam islands, vietnam boat" },
+  // Chủ đề
+  { group: THEME, label: "🇻🇳 Thiên nhiên", terms: "ha long bay, vietnam rice field, mekong river, da nang, vietnam nature" },
+  { group: THEME, label: "🇻🇳 Chill / Cafe", terms: "vietnam coffee, hoi an, hanoi cafe, saigon night, vietnam rain" },
+  { group: THEME, label: "🇻🇳 Tổng hợp", terms: "vietnam, hanoi, saigon street, ha long bay, hoi an" },
+];
+
 export default function CreateView() {
   const [params, setParams] = useState<VideoParams>({ ...DEFAULT_PARAMS });
+  const [scenePreset, setScenePreset] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [scriptLoading, setScriptLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -186,6 +215,44 @@ export default function CreateView() {
               sub="YouTube"
             />
           </div>
+        </div>
+
+        {/* Bối cảnh video nền */}
+        <div>
+          <label className="label">
+            Bối cảnh video nền{" "}
+            <span className="text-zinc-600 normal-case">
+              (chọn preset → tự điền từ khóa, sửa được trong Nâng cao)
+            </span>
+          </label>
+          <select
+            className="input"
+            value={scenePreset}
+            onChange={(e) => {
+              const idx = +e.target.value;
+              setScenePreset(idx);
+              set("video_terms", SCENE_PRESETS[idx].terms);
+            }}
+          >
+            {SCENE_PRESETS.map((p, i) =>
+              p.group ? null : (
+                <option key={p.label} value={i}>
+                  {p.label}
+                </option>
+              )
+            )}
+            {[CITY, THEME].map((group) => (
+              <optgroup key={group} label={group}>
+                {SCENE_PRESETS.map((p, i) =>
+                  p.group === group ? (
+                    <option key={p.label} value={i}>
+                      {p.label}
+                    </option>
+                  ) : null
+                )}
+              </optgroup>
+            ))}
+          </select>
         </div>
 
         {/* Nâng cao */}

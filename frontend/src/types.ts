@@ -29,8 +29,12 @@ export interface VideoParams {
   bgm_volume: number;
   subtitle_enabled: boolean;
   subtitle_position: string;
+  font_name: string;
   font_size: number;
   text_fore_color: string;
+  text_background_color: boolean;
+  stroke_color: string;
+  stroke_width: number;
   paragraph_number: number;
 }
 
@@ -51,8 +55,12 @@ export const DEFAULT_PARAMS: VideoParams = {
   bgm_volume: 0.2,
   subtitle_enabled: true,
   subtitle_position: "bottom",
+  font_name: "BeVietnamPro-Bold.ttf",
   font_size: 60,
   text_fore_color: "#FFFFFF",
+  text_background_color: false,
+  stroke_color: "#000000",
+  stroke_width: 2,
   paragraph_number: 1,
 };
 
