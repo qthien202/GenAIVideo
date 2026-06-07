@@ -255,6 +255,20 @@ def get_bgm_list(request: Request):
     return utils.get_response(200, response)
 
 
+@router.get("/musics/{file_name}", summary="Stream a BGM file for preview")
+def get_music_file(
+    request: Request, file_name: str = Path(..., description="BGM file name")
+):
+    request_id = base.get_task_id(request)
+    song_dir = utils.song_dir()
+    file_path = _resolve_path_within_directory(song_dir, file_name, request_id)
+    if not file_path.lower().endswith(".mp3"):
+        raise HttpException(
+            "", status_code=400, message=f"{request_id}: only mp3 preview is supported"
+        )
+    return FileResponse(path=file_path, media_type="audio/mpeg")
+
+
 @router.post(
     "/musics",
     response_model=BgmUploadResponse,
