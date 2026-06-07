@@ -1459,6 +1459,41 @@ def _build_subtitle_items_from_legacy_submaker(
     return sub_items
 
 
+def _build_subtitle_items_by_duration(
+    sub_maker: SubMaker, script_lines: list[str]
+) -> list[str]:
+    """
+    兜底方案：逐行精确匹配失败时，按字符数比例把音频总时长
+    分配到每条脚本断句，生成近似时间轴。
+
+    背景：TTS 实际朗读文本和脚本可能存在细微差异（数字读法、
+    缩写展开等），导致 `_match_script_line` 级联失配。以前直接
+    放弃会触发 Whisper 大模型回退（下载 ~3GB、CPU 转写很慢），
+    对短视频来说按比例分配的时间轴已经足够贴合。
+    """
+    audio_duration = _get_audio_duration_from_submaker(sub_maker)  # 单位：秒
+    total_chars = sum(len(line) for line in script_lines)
+    if audio_duration <= 0 or total_chars <= 0:
+        return []
+
+    formatter = _build_subtitle_formatter()
+    audio_duration_100ns = audio_duration * 10000000
+    sub_items = []
+    current = 0.0
+    for idx, line in enumerate(script_lines, start=1):
+        duration = audio_duration_100ns * len(line) / total_chars
+        sub_items.append(
+            formatter(
+                idx=idx,
+                start_time=current,
+                end_time=current + duration,
+                sub_text=line.strip(),
+            )
+        )
+        current += duration
+    return sub_items
+
+
 def create_subtitle(sub_maker: SubMaker, text: str, subtitle_file: str):
     """
     优化字幕文件
@@ -1478,9 +1513,13 @@ def create_subtitle(sub_maker: SubMaker, text: str, subtitle_file: str):
 
         if len(sub_items) != len(script_lines):
             logger.warning(
-                f"failed, sub_items len: {len(sub_items)}, script_lines len: {len(script_lines)}"
+                f"line match failed, sub_items len: {len(sub_items)}, "
+                f"script_lines len: {len(script_lines)}, "
+                "fallback to proportional timeline"
             )
-            return
+            sub_items = _build_subtitle_items_by_duration(sub_maker, script_lines)
+            if not sub_items:
+                return
 
         _write_subtitle_items(sub_items, subtitle_file)
     except Exception as e:
