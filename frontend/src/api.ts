@@ -51,6 +51,37 @@ export function generateTerms(body: {
   return request("/api/v1/terms", { method: "POST", body: JSON.stringify(body) });
 }
 
+export interface ProviderConfig {
+  api_key: string;
+  model_name: string;
+  base_url: string;
+}
+
+export interface AppSettings {
+  llm_provider: string;
+  providers: Record<string, ProviderConfig>;
+  pexels_api_keys: string[];
+  pixabay_api_keys: string[];
+}
+
+export function getSettings(): Promise<AppSettings> {
+  return request("/api/v1/config");
+}
+
+export function saveSettings(body: {
+  llm_provider: string;
+  api_key: string;
+  model_name: string;
+  base_url: string;
+  pexels_api_keys: string[];
+  pixabay_api_keys: string[];
+}): Promise<void> {
+  return request("/api/v1/config", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
 /** Chuyển đường dẫn video mà task trả về thành URL stream được qua proxy */
 export function toStreamUrl(fileUrl: string): string {
   // BE trả dạng "/tasks/<task_id>/final-1.mp4" hoặc URL đầy đủ

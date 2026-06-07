@@ -1,8 +1,9 @@
 import { useState } from "react";
 import CreateView from "./components/CreateView";
 import LibraryView from "./components/LibraryView";
+import SettingsView from "./components/SettingsView";
 
-type Tab = "create" | "library";
+type Tab = "create" | "library" | "settings";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("create");
@@ -33,6 +34,7 @@ export default function App() {
             [
               ["create", "✨ Tạo video"],
               ["library", "📚 Thư viện"],
+              ["settings", "⚙️ Cài đặt"],
             ] as [Tab, string][]
           ).map(([key, label]) => (
             <button
@@ -50,7 +52,13 @@ export default function App() {
         </nav>
       </header>
 
-      {tab === "create" ? <CreateView /> : <LibraryView />}
+      {tab === "create" ? (
+        <CreateView />
+      ) : tab === "library" ? (
+        <LibraryView />
+      ) : (
+        <SettingsView />
+      )}
 
       <footer className="mt-12 text-center text-xs text-zinc-600">
         Backend:{" "}
