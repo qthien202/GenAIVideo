@@ -42,6 +42,14 @@ def generate_terms(task_id, params, video_script):
         video_terms = llm.generate_terms(
             video_subject=params.video_subject, video_script=video_script, amount=5
         )
+        # LLM 失败时 generate_terms 会返回错误字符串；直接传下去会被
+        # download_videos 逐字符遍历去搜索，必须在这里拦截标记失败。
+        if isinstance(video_terms, str):
+            sm.state.update_task(
+                task_id, state=const.TASK_STATE_FAILED, error=video_terms[:500]
+            )
+            logger.error(f"failed to generate video terms: {video_terms}")
+            return None
     else:
         if isinstance(video_terms, str):
             video_terms = [term.strip() for term in re.split(r"[,，]", video_terms)]

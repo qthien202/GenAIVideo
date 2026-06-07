@@ -54,6 +54,21 @@ class TaskManager:
             with self.lock:
                 self.current_tasks += 1
             func(*args, **kwargs)  # call the function here, passing *args and **kwargs.
+        except Exception as e:
+            # 任务线程内未捕获的异常会让任务永远停留在 processing 状态，
+            # 前端进度条卡死。这里兜底把任务标记为失败并记录错误信息。
+            logger.exception(f"task {func.__name__} failed: {e}")
+            task_id = kwargs.get("task_id")
+            if task_id:
+                from app.models import const
+                from app.services import state as sm
+
+                # 上游某些错误信息（如 material.get_api_key）会附带整份配置
+                # （含密钥），只保留正文部分，避免泄露到前端。
+                error_message = str(e).split("\n{", 1)[0].strip()[:500]
+                sm.state.update_task(
+                    task_id, state=const.TASK_STATE_FAILED, error=error_message
+                )
         finally:
             self.task_done()
 
