@@ -31,7 +31,7 @@ body::before {
   height: 55vmax;
   top: -20vmax;
   left: -12vmax;
-  background: radial-gradient(circle at 30% 30%, rgba(124, 58, 237, 0.5), rgba(217, 70, 239, 0.18) 55%, transparent 75%);
+  background: radial-gradient(circle at 30% 30%, rgba(6, 182, 212, 0.45), rgba(59, 130, 246, 0.18) 55%, transparent 75%);
   animation: blob-a 26s ease-in-out infinite alternate;
 }
 body::after {
@@ -39,7 +39,7 @@ body::after {
   height: 45vmax;
   bottom: -18vmax;
   right: -10vmax;
-  background: radial-gradient(circle at 70% 70%, rgba(6, 182, 212, 0.35), rgba(59, 130, 246, 0.15) 55%, transparent 75%);
+  background: radial-gradient(circle at 70% 70%, rgba(37, 99, 235, 0.35), rgba(14, 165, 233, 0.15) 55%, transparent 75%);
   animation: blob-b 32s ease-in-out infinite alternate;
 }
 @keyframes blob-a {
@@ -92,7 +92,7 @@ body::after {
 .input {
   @apply w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm
     placeholder:text-zinc-500 outline-none transition
-    focus:border-violet-400/60 focus:ring-2 focus:ring-violet-500/25 focus:bg-white/[0.07];
+    focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-500/25 focus:bg-white/[0.07];
 }
 select.input option {
   @apply bg-zinc-900 text-zinc-100;
@@ -111,10 +111,10 @@ select.input option {
 
 .btn-primary {
   @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold text-sm
-    bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white
-    hover:from-violet-500 hover:to-fuchsia-500 active:scale-[0.98] transition
+    bg-gradient-to-r from-cyan-600 to-blue-600 text-white
+    hover:from-cyan-500 hover:to-blue-500 active:scale-[0.98] transition
     disabled:opacity-40 disabled:pointer-events-none
-    shadow-lg shadow-violet-900/40 ring-1 ring-white/20 ring-inset;
+    shadow-lg shadow-cyan-900/40 ring-1 ring-white/20 ring-inset;
 }
 
 .btn-ghost {

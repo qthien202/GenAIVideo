@@ -93,7 +93,7 @@ function TaskCard({
           <span className="text-3xl">❌</span>
         ) : (
           <div className="text-center">
-            <div className="w-8 h-8 mx-auto border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 mx-auto border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
             <div className="text-xs text-zinc-400 mt-2 font-mono">
               {task.progress ?? 0}%
             </div>
@@ -105,7 +105,7 @@ function TaskCard({
               ? "bg-emerald-500/20 text-emerald-300"
               : isFailed
                 ? "bg-red-500/20 text-red-300"
-                : "bg-violet-500/20 text-violet-300"
+                : "bg-cyan-500/20 text-cyan-300"
           }`}
         >
           {isDone ? "Hoàn thành" : isFailed ? "Thất bại" : "Đang xử lý"}

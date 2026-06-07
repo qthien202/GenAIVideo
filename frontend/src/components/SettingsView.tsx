@@ -250,7 +250,7 @@ export default function SettingsView() {
             <a
               href="https://www.pexels.com/api/"
               target="_blank"
-              className="text-violet-400 underline normal-case"
+              className="text-cyan-400 underline normal-case"
             >
               lấy key
             </a>
@@ -269,7 +269,7 @@ export default function SettingsView() {
             <a
               href="https://pixabay.com/api/docs/"
               target="_blank"
-              className="text-violet-400 underline normal-case"
+              className="text-cyan-400 underline normal-case"
             >
               lấy key
             </a>

@@ -112,7 +112,7 @@ export default function CreateView() {
               {scriptLoading ? (
                 <Spinner />
               ) : (
-                <span className="text-violet-400">✨</span>
+                <span className="text-cyan-400">✨</span>
               )}
               AI viết kịch bản
             </button>
@@ -232,7 +232,7 @@ export default function CreateView() {
                   type="range"
                   min={2}
                   max={10}
-                  className="w-full accent-violet-500"
+                  className="w-full accent-cyan-500"
                   value={params.video_clip_duration}
                   onChange={(e) => set("video_clip_duration", +e.target.value)}
                 />
@@ -243,7 +243,7 @@ export default function CreateView() {
                   type="range"
                   min={1}
                   max={5}
-                  className="w-full accent-violet-500"
+                  className="w-full accent-cyan-500"
                   value={params.video_count}
                   onChange={(e) => set("video_count", +e.target.value)}
                 />
@@ -257,7 +257,7 @@ export default function CreateView() {
                   min={0.5}
                   max={2}
                   step={0.1}
-                  className="w-full accent-violet-500"
+                  className="w-full accent-cyan-500"
                   value={params.voice_rate}
                   onChange={(e) => set("voice_rate", +e.target.value)}
                 />
@@ -271,7 +271,7 @@ export default function CreateView() {
                   min={0}
                   max={1}
                   step={0.05}
-                  className="w-full accent-violet-500"
+                  className="w-full accent-cyan-500"
                   value={params.bgm_volume}
                   onChange={(e) => set("bgm_volume", +e.target.value)}
                 />
@@ -348,11 +348,11 @@ export default function CreateView() {
           <div className="py-8">
             <div className="flex justify-between text-sm mb-2">
               <span className="text-zinc-400">Đang xử lý...</span>
-              <span className="font-mono text-violet-400">{progress}%</span>
+              <span className="font-mono text-cyan-400">{progress}%</span>
             </div>
             <div className="h-2.5 bg-zinc-800 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full transition-all duration-700"
+                className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-700"
                 style={{ width: `${Math.max(progress, 3)}%` }}
               />
             </div>
@@ -419,7 +419,7 @@ function AspectButton(props: {
       onClick={props.onClick}
       className={`flex-1 rounded-xl border px-4 py-3 text-left transition ${
         props.active
-          ? "border-violet-500/70 bg-violet-500/10 ring-2 ring-violet-500/20"
+          ? "border-cyan-500/70 bg-cyan-500/10 ring-2 ring-cyan-500/20"
           : "border-zinc-700/60 bg-zinc-800/40 hover:bg-zinc-800/80"
       }`}
     >
@@ -436,7 +436,7 @@ function Toggle(props: { checked: boolean; onChange: (v: boolean) => void }) {
     <button
       onClick={() => props.onChange(!props.checked)}
       className={`relative w-11 h-6 rounded-full transition ${
-        props.checked ? "bg-violet-600" : "bg-zinc-700"
+        props.checked ? "bg-cyan-600" : "bg-zinc-700"
       }`}
     >
       <span
