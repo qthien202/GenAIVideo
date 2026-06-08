@@ -50,6 +50,7 @@ export default function SettingsView() {
   const [pixabayKeys, setPixabayKeys] = useState("");
   const [elevenlabsKey, setElevenlabsKey] = useState("");
   const [fptKey, setFptKey] = useState("");
+  const [gcloudKey, setGcloudKey] = useState("");
   const [showKeys, setShowKeys] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -67,6 +68,7 @@ export default function SettingsView() {
         setPixabayKeys(s.pixabay_api_keys.join(", "));
         setElevenlabsKey(s.elevenlabs_api_key ?? "");
         setFptKey(s.fpt_api_key ?? "");
+        setGcloudKey(s.gcloud_tts_api_key ?? "");
       })
       .catch((e: any) => setError(`Không tải được cài đặt: ${e.message}`))
       .finally(() => setLoading(false));
@@ -121,6 +123,7 @@ export default function SettingsView() {
         pixabay_api_keys: pixabayKeys.split(",").map((k) => k.trim()).filter(Boolean),
         elevenlabs_api_key: elevenlabsKey.trim(),
         fpt_api_key: fptKey.trim(),
+        gcloud_tts_api_key: gcloudKey.trim(),
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -298,6 +301,29 @@ export default function SettingsView() {
           giọng Việt tự nhiên kiểu postcard/voiceover thì điền key FPT.AI; còn
           ElevenLabs cho chất lượng cao nhất.
         </p>
+        <div>
+          <label className="label">
+            🌟 Google Cloud TTS API key{" "}
+            <span className="text-zinc-600 normal-case">
+              (giọng Việt native WaveNet/Neural2, free ~1tr ký tự/tháng)
+            </span>{" "}
+            —{" "}
+            <a
+              href="https://console.cloud.google.com/apis/library/texttospeech.googleapis.com"
+              target="_blank"
+              className="text-cyan-400 underline normal-case"
+            >
+              lấy key
+            </a>
+          </label>
+          <input
+            className="input"
+            type={showKeys ? "text" : "password"}
+            placeholder="AIza..."
+            value={gcloudKey}
+            onChange={(e) => setGcloudKey(e.target.value)}
+          />
+        </div>
         <div>
           <label className="label">
             💌 FPT.AI API key{" "}

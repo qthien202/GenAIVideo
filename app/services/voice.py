@@ -210,6 +210,26 @@ def is_fpt_voice(voice_name: str):
     return voice_name.startswith("fpt:")
 
 
+def is_gcloud_voice(voice_name: str):
+    """Google Cloud TTS — giọng Việt native chất cao (WaveNet/Neural2/Standard)."""
+    return voice_name.startswith("gcloud:")
+
+
+def get_gcloud_voices() -> list[str]:
+    # Giọng vi-VN của Google Cloud TTS; WaveNet/Neural2 tự nhiên nhất, để đầu.
+    voices_with_gender = [
+        ("vi-VN-Wavenet-A", "Female"),
+        ("vi-VN-Wavenet-C", "Female"),
+        ("vi-VN-Wavenet-B", "Male"),
+        ("vi-VN-Wavenet-D", "Male"),
+        ("vi-VN-Neural2-A", "Female"),
+        ("vi-VN-Neural2-D", "Male"),
+        ("vi-VN-Standard-A", "Female"),
+        ("vi-VN-Standard-B", "Male"),
+    ]
+    return [f"gcloud:{voice}-{gender}" for voice, gender in voices_with_gender]
+
+
 def get_fpt_voices() -> list[str]:
     # Bộ giọng FPT.AI v5; các giọng ấm/truyền cảm hợp video postcard để đầu danh sách.
     voices_with_gender = [
@@ -404,6 +424,14 @@ def tts(
             return fpt_tts(text, voice, voice_rate, voice_file, voice_volume)
         else:
             logger.error(f"Invalid fpt voice name format: {voice_name}")
+            return None
+    elif is_gcloud_voice(voice_name):
+        # format: gcloud:vi-VN-Wavenet-A (gender đã được parse_voice_name lược bỏ)
+        parts = voice_name.split(":", 1)
+        if len(parts) >= 2 and parts[1]:
+            return gcloud_tts(text, parts[1], voice_rate, voice_file, voice_volume)
+        else:
+            logger.error(f"Invalid gcloud voice name format: {voice_name}")
             return None
     return azure_tts_v1(text, voice_name, voice_rate, voice_file)
 
@@ -1094,6 +1122,82 @@ def elevenlabs_tts(
             )
         except Exception as e:
             logger.error(f"elevenlabs tts failed: {str(e)}")
+    return None
+
+
+def gcloud_tts(
+    text: str,
+    voice: str,
+    voice_rate: float,
+    voice_file: str,
+    voice_volume: float = 1.0,
+) -> Union[SubMaker, None]:
+    """
+    Sinh giọng bằng Google Cloud Text-to-Speech (giọng vi-VN native chất cao).
+    Dùng REST + API key (https://texttospeech.googleapis.com/v1/text:synthesize).
+
+    Args:
+        voice: tên giọng đầy đủ, vd "vi-VN-Wavenet-A"
+        voice_rate: app rate (0.5–2.0) → speakingRate Google (0.25–4.0)
+    """
+    text = text.strip()
+    api_key = config.app.get("gcloud_tts_api_key", "")
+    if not api_key:
+        logger.error("Google Cloud TTS API key is not set (config: gcloud_tts_api_key)")
+        return None
+
+    # "vi-VN-Wavenet-A" -> languageCode "vi-VN"
+    parts = voice.split("-")
+    language_code = "-".join(parts[:2]) if len(parts) >= 2 else "vi-VN"
+    speaking_rate = max(0.25, min(4.0, voice_rate))
+
+    url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={api_key}"
+    payload = {
+        "input": {"text": text},
+        "voice": {"languageCode": language_code, "name": voice},
+        "audioConfig": {"audioEncoding": "MP3", "speakingRate": speaking_rate},
+    }
+
+    for i in range(3):
+        try:
+            logger.info(
+                f"start gcloud tts, voice: {voice}, rate: {speaking_rate}, "
+                f"chars: {len(text)}, try: {i + 1}"
+            )
+            resp = requests.post(url, json=payload, timeout=120)
+            if resp.status_code != 200:
+                logger.error(
+                    f"gcloud tts failed: {resp.status_code}, {resp.text[:400]}"
+                )
+                # 400/403 thường là key sai / chưa bật API / chưa bật billing → không retry
+                if resp.status_code in (400, 401, 403):
+                    return None
+                continue
+            audio_b64 = resp.json().get("audioContent")
+            if not audio_b64:
+                logger.error(f"gcloud tts: thiếu audioContent, resp: {resp.text[:200]}")
+                continue
+
+            with open(voice_file, "wb") as f:
+                f.write(base64.b64decode(audio_b64))
+
+            audio_clip = AudioFileClip(voice_file)
+            audio_duration = audio_clip.duration
+            audio_clip.close()
+
+            sub_maker = ensure_legacy_submaker_fields(SubMaker())
+            lead_in, tail = measure_audio_silences(voice_file)
+            logger.info(f"completed gcloud tts, output file: {voice_file}")
+            return populate_legacy_submaker_with_full_text(
+                sub_maker=sub_maker,
+                text=text,
+                audio_duration_seconds=audio_duration,
+                lead_in_seconds=lead_in,
+                tail_seconds=tail,
+                gap_seconds=0.3,
+            )
+        except Exception as e:
+            logger.error(f"gcloud tts failed, error: {str(e)}")
     return None
 
 

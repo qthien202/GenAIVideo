@@ -121,6 +121,10 @@ gemini_model_name = "gemini-2.5-flash"
 # Đăng ký key tại https://console.fpt.ai → tạo Project → Speech / Text to Speech → bật API → tạo API Key
 fpt_api_key = ""
 
+########## Google Cloud Text-to-Speech — giọng vi-VN native (WaveNet/Neural2), free ~1tr ký tự/tháng
+# Tạo key: console.cloud.google.com → bật "Cloud Text-to-Speech API" → Credentials → API key
+gcloud_tts_api_key = ""
+
 ########## Grok API Key
 grok_api_key = ""
 grok_model_name = "grok-4.3"

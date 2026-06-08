@@ -78,10 +78,10 @@ export const VOICES: VoiceOption[] = [
   { group: "🆓 Miễn phí — Tiếng Việt (Edge)", value: "vi-VN-HoaiMyNeural-Female", label: "🇻🇳 Hoài My — Nữ (khuyên dùng)" },
   { group: "🆓 Miễn phí — Tiếng Việt (Edge)", value: "vi-VN-NamMinhNeural-Male", label: "🇻🇳 Nam Minh — Nam" },
   // Giọng đa ngôn ngữ gen mới — đọc được tiếng Việt, rất tự nhiên (vẫn free qua Edge)
-  { group: "🆓 Miễn phí — Đa ngôn ngữ (Edge, đọc được tiếng Việt)", value: "en-US-AvaMultilingualNeural-Female", label: "🌐 Ava — Nữ, tự nhiên" },
-  { group: "🆓 Miễn phí — Đa ngôn ngữ (Edge, đọc được tiếng Việt)", value: "en-US-AndrewMultilingualNeural-Male", label: "🌐 Andrew — Nam, ấm" },
-  { group: "🆓 Miễn phí — Đa ngôn ngữ (Edge, đọc được tiếng Việt)", value: "en-US-EmmaMultilingualNeural-Female", label: "🌐 Emma — Nữ, trẻ" },
-  { group: "🆓 Miễn phí — Đa ngôn ngữ (Edge, đọc được tiếng Việt)", value: "en-US-BrianMultilingualNeural-Male", label: "🌐 Brian — Nam, trầm" },
+  { group: "🆓 Miễn phí — Đa ngôn ngữ (hợp tiếng Anh; đọc tiếng Việt bị giọng lai)", value: "en-US-AvaMultilingualNeural-Female", label: "🌐 Ava — Nữ, tự nhiên" },
+  { group: "🆓 Miễn phí — Đa ngôn ngữ (hợp tiếng Anh; đọc tiếng Việt bị giọng lai)", value: "en-US-AndrewMultilingualNeural-Male", label: "🌐 Andrew — Nam, ấm" },
+  { group: "🆓 Miễn phí — Đa ngôn ngữ (hợp tiếng Anh; đọc tiếng Việt bị giọng lai)", value: "en-US-EmmaMultilingualNeural-Female", label: "🌐 Emma — Nữ, trẻ" },
+  { group: "🆓 Miễn phí — Đa ngôn ngữ (hợp tiếng Anh; đọc tiếng Việt bị giọng lai)", value: "en-US-BrianMultilingualNeural-Male", label: "🌐 Brian — Nam, trầm" },
   // Giọng Anh-Mỹ phổ biến kiểu TikTok (free)
   { group: "🆓 Miễn phí — English (Edge)", value: "en-US-AriaNeural-Female", label: "🇺🇸 Aria — Nữ, kiểu TikTok" },
   { group: "🆓 Miễn phí — English (Edge)", value: "en-US-JennyNeural-Female", label: "🇺🇸 Jenny — Nữ" },
@@ -90,6 +90,13 @@ export const VOICES: VoiceOption[] = [
   { group: "🆓 Miễn phí — English (Edge)", value: "en-US-MichelleNeural-Female", label: "🇺🇸 Michelle — Nữ, dịu" },
   { group: "🆓 Miễn phí — 中文 (Edge)", value: "zh-CN-XiaoxiaoNeural-Female", label: "🇨🇳 Xiaoxiao — 女" },
   { group: "🆓 Miễn phí — 中文 (Edge)", value: "zh-CN-YunxiNeural-Male", label: "🇨🇳 Yunxi — 男" },
+  // ===== Google Cloud TTS — giọng vi-VN native chất cao, free ~1tr ký tự/tháng (cần key GCP) =====
+  { group: "🌟 Google Cloud — Giọng Việt native (free ~1tr ký tự/tháng, cần key)", value: "gcloud:vi-VN-Wavenet-A-Female", label: "🌟 WaveNet A — Nữ (khuyên dùng)" },
+  { group: "🌟 Google Cloud — Giọng Việt native (free ~1tr ký tự/tháng, cần key)", value: "gcloud:vi-VN-Wavenet-C-Female", label: "🌟 WaveNet C — Nữ" },
+  { group: "🌟 Google Cloud — Giọng Việt native (free ~1tr ký tự/tháng, cần key)", value: "gcloud:vi-VN-Neural2-A-Female", label: "🌟 Neural2 A — Nữ (mới)" },
+  { group: "🌟 Google Cloud — Giọng Việt native (free ~1tr ký tự/tháng, cần key)", value: "gcloud:vi-VN-Wavenet-B-Male", label: "🌟 WaveNet B — Nam" },
+  { group: "🌟 Google Cloud — Giọng Việt native (free ~1tr ký tự/tháng, cần key)", value: "gcloud:vi-VN-Wavenet-D-Male", label: "🌟 WaveNet D — Nam" },
+  { group: "🌟 Google Cloud — Giọng Việt native (free ~1tr ký tự/tháng, cần key)", value: "gcloud:vi-VN-Neural2-D-Male", label: "🌟 Neural2 D — Nam (mới)" },
   // ===== FPT.AI — giọng Việt tự nhiên kiểu voiceover TikTok (cần key FPT, có free tier) =====
   // Giọng ấm/truyền cảm hợp video postcard/chill để đầu danh sách.
   { group: "💌 FPT.AI — Giọng Việt postcard (cần key FPT)", value: "fpt:banmai-Female", label: "💌 Ban Mai — Nữ ấm, postcard (khuyên dùng)" },
@@ -117,9 +124,10 @@ export const VOICES: VoiceOption[] = [
 
 /** Thứ tự nhóm voice hiển thị trong dropdown */
 export const VOICE_GROUPS: string[] = [
+  "🌟 Google Cloud — Giọng Việt native (free ~1tr ký tự/tháng, cần key)",
   "💌 FPT.AI — Giọng Việt postcard (cần key FPT)",
   "🆓 Miễn phí — Tiếng Việt (Edge)",
-  "🆓 Miễn phí — Đa ngôn ngữ (Edge, đọc được tiếng Việt)",
+  "🆓 Miễn phí — Đa ngôn ngữ (hợp tiếng Anh; đọc tiếng Việt bị giọng lai)",
   "🆓 Miễn phí — English (Edge)",
   "🆓 Miễn phí — 中文 (Edge)",
   "✨ Gemini (free, cần key Gemini)",

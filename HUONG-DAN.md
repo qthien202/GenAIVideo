@@ -58,6 +58,7 @@ Mở web → nút **⚙️ Cài đặt** → điền key:
 |---|---|---|---|
 | **LLM** (Gemini/Groq/...) | ✅ | [Gemini](https://aistudio.google.com/apikey) · [Groq](https://console.groq.com/keys) | Có, đủ dùng |
 | **Pexels** (video nền) | ✅ | [pexels.com/api](https://www.pexels.com/api/) | 200 req/giờ |
+| **Google Cloud TTS** (giọng Việt native) | ❌ | [console.cloud.google.com](https://console.cloud.google.com/apis/library/texttospeech.googleapis.com) | ~1tr ký tự/tháng |
 | **FPT.AI** (giọng Việt postcard) | ❌ | [console.fpt.ai](https://console.fpt.ai) | Có free tier |
 | **ElevenLabs** (giọng Adam...) | ❌ | [elevenlabs.io](https://elevenlabs.io/app/settings/api-keys) | 10k ký tự/tháng |
 
@@ -71,7 +72,8 @@ Mở web → nút **⚙️ Cài đặt** → điền key:
 1. Nhập **chủ đề** (vd: *"Cần Thơ về đêm có gì khiến người ta thương?"*)
 2. Kéo **Độ dài kịch bản** (1 đoạn ≈ 40s video, tối đa 15 đoạn ≈ 10 phút) → bấm **✨ AI viết kịch bản** hoặc tự viết
 3. Chọn **giọng đọc** (bấm **🔊** cạnh ô chọn để **nghe thử ngay** — backend đọc 1 câu mẫu):
-   - 💌 **FPT.AI** (Ban Mai, Ngọc Lam, Thu Minh, Lê Minh...) — giọng Việt tự nhiên kiểu voiceover TikTok, **hợp video postcard/chill nhất**; cần key FPT.AI (có free tier)
+   - 🌟 **Google Cloud TTS** (WaveNet/Neural2 vi-VN) — giọng Việt **native, chất cao, free ~1 triệu ký tự/tháng** (rộng nhất); cần key Google Cloud (phải bật billing dù không bị tính tiền trong hạn mức)
+   - 💌 **FPT.AI** (Ban Mai, Ngọc Lam, Thu Minh, Lê Minh...) — giọng Việt tự nhiên kiểu voiceover TikTok, **hợp video postcard/chill nhất**; cần key FPT.AI (free tier có hạn)
    - 🆓 **Edge** — free vô hạn, không cần key: Hoài My / Nam Minh (Việt) + Ava / Andrew / Emma / Brian (đa ngôn ngữ, đọc được tiếng Việt, rất tự nhiên) + Aria / Jenny / Guy kiểu TikTok
    - ✨ **Gemini** (Aoede, Charon, Puck...) — free với key Gemini, đọc theo style cấu hình sẵn (mặc định: ấm áp kiểu đọc bưu thiếp)
    - 🎙️ **ElevenLabs** (Adam, Rachel...) — chất nhất, cần key, 10k ký tự/tháng

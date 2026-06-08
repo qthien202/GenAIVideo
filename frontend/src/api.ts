@@ -98,6 +98,7 @@ export interface AppSettings {
   pixabay_api_keys: string[];
   elevenlabs_api_key: string;
   fpt_api_key: string;
+  gcloud_tts_api_key: string;
 }
 
 export function getSettings(): Promise<AppSettings> {
@@ -113,6 +114,7 @@ export function saveSettings(body: {
   pixabay_api_keys: string[];
   elevenlabs_api_key: string;
   fpt_api_key: string;
+  gcloud_tts_api_key: string;
 }): Promise<void> {
   return request("/api/v1/config", {
     method: "PUT",

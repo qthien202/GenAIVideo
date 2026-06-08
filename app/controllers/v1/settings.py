@@ -57,6 +57,7 @@ def get_settings(request: Request):
         "pixabay_api_keys": _to_key_list(config.app.get("pixabay_api_keys")),
         "elevenlabs_api_key": config.app.get("elevenlabs_api_key", ""),
         "fpt_api_key": config.app.get("fpt_api_key", ""),
+        "gcloud_tts_api_key": config.app.get("gcloud_tts_api_key", ""),
     }
     return utils.get_response(200, response)
 
@@ -70,6 +71,7 @@ class SaveSettingsRequest(BaseModel):
     pixabay_api_keys: List[str] = []
     elevenlabs_api_key: str = ""
     fpt_api_key: str = ""
+    gcloud_tts_api_key: str = ""
 
 
 @router.put("/config", summary="Update LLM & material provider settings")
@@ -86,6 +88,7 @@ def save_settings(request: Request, body: SaveSettingsRequest):
     config.app["pixabay_api_keys"] = [k.strip() for k in body.pixabay_api_keys if k.strip()]
     config.app["elevenlabs_api_key"] = body.elevenlabs_api_key.strip()
     config.app["fpt_api_key"] = body.fpt_api_key.strip()
+    config.app["gcloud_tts_api_key"] = body.gcloud_tts_api_key.strip()
     config.save_config()
 
     return utils.get_response(200)
