@@ -14,6 +14,16 @@
 </div>
 
 <br>
+
+> 🎬 **GenAI Video** — bản fork Việt hoá của MoneyPrinterTurbo: **frontend React mới** (Vite + Tailwind, responsive), giọng đọc **FPT.AI / Gemini / Edge** có **nghe thử**, **16 font phụ đề** xem preview chữ thật, bối cảnh **Chủ đề × Địa điểm Việt Nam**, nhạc postcard nghe thử. 👉 Đọc [**HƯỚNG DẪN TIẾNG VIỆT (HUONG-DAN.md)**](HUONG-DAN.md).
+
+<p align="center">
+  <img src="docs/screenshots/ui-fonts.png" width="58%" alt="GenAI Video — tạo video, giọng FPT.AI, font picker preview"/>
+  &nbsp;
+  <img src="docs/screenshots/ui-mobile.png" width="26%" alt="Giao diện responsive trên điện thoại"/>
+</p>
+
+<br>
 只需提供一个视频 <b>主题</b> 或 <b>关键词</b> ，就可以全自动生成视频文案、视频素材、视频字幕、视频背景音乐，然后合成一个高清的短视频。
 <br>
 

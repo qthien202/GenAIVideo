@@ -916,7 +916,9 @@ def generate_video(
         _clip = _clip.with_end(subtitle_item[0][1])
         _clip = _clip.with_duration(duration)
         if params.subtitle_position == "bottom":
-            _clip = _clip.with_position(("center", video_height * 0.95 - _clip.h))
+            # Nâng phụ đề khỏi vùng caption/username/nút của TikTok ở đáy màn hình.
+            # Mép dưới phụ đề ~84% chiều cao (cách đáy ~16%) thay vì sát đáy 95%.
+            _clip = _clip.with_position(("center", video_height * 0.84 - _clip.h))
         elif params.subtitle_position == "top":
             _clip = _clip.with_position(("center", video_height * 0.05))
         elif params.subtitle_position == "custom":

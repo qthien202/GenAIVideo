@@ -49,6 +49,7 @@ export default function SettingsView() {
   const [pexelsKeys, setPexelsKeys] = useState("");
   const [pixabayKeys, setPixabayKeys] = useState("");
   const [elevenlabsKey, setElevenlabsKey] = useState("");
+  const [fptKey, setFptKey] = useState("");
   const [showKeys, setShowKeys] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -65,6 +66,7 @@ export default function SettingsView() {
         setPexelsKeys(s.pexels_api_keys.join(", "));
         setPixabayKeys(s.pixabay_api_keys.join(", "));
         setElevenlabsKey(s.elevenlabs_api_key ?? "");
+        setFptKey(s.fpt_api_key ?? "");
       })
       .catch((e: any) => setError(`Không tải được cài đặt: ${e.message}`))
       .finally(() => setLoading(false));
@@ -118,6 +120,7 @@ export default function SettingsView() {
         pexels_api_keys: pexelsKeys.split(",").map((k) => k.trim()).filter(Boolean),
         pixabay_api_keys: pixabayKeys.split(",").map((k) => k.trim()).filter(Boolean),
         elevenlabs_api_key: elevenlabsKey.trim(),
+        fpt_api_key: fptKey.trim(),
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -292,9 +295,32 @@ export default function SettingsView() {
         <h2 className="font-semibold flex items-center gap-2">🎙️ Giọng đọc</h2>
         <p className="text-xs text-zinc-500 -mt-3">
           Giọng Edge TTS (Hoài My, Nam Minh...) miễn phí không cần key. Muốn
-          dùng giọng ElevenLabs (Adam, Rachel...) thì điền key — free tier
-          10.000 ký tự/tháng.
+          giọng Việt tự nhiên kiểu postcard/voiceover thì điền key FPT.AI; còn
+          ElevenLabs cho chất lượng cao nhất.
         </p>
+        <div>
+          <label className="label">
+            💌 FPT.AI API key{" "}
+            <span className="text-zinc-600 normal-case">
+              (giọng Việt postcard: Ban Mai, Ngọc Lam...)
+            </span>{" "}
+            —{" "}
+            <a
+              href="https://console.fpt.ai"
+              target="_blank"
+              className="text-cyan-400 underline normal-case"
+            >
+              lấy key
+            </a>
+          </label>
+          <input
+            className="input"
+            type={showKeys ? "text" : "password"}
+            placeholder="FPT.AI api-key..."
+            value={fptKey}
+            onChange={(e) => setFptKey(e.target.value)}
+          />
+        </div>
         <div>
           <label className="label">
             ElevenLabs API key —{" "}

@@ -15,6 +15,12 @@ Fork từ [MoneyPrinterTurbo](https://github.com/harry0703/MoneyPrinterTurbo), t
 - ⏱️ **Video tới ~10 phút** (kịch bản 15 đoạn), mỗi cảnh 2–30s
 - 🐛 **Fix lỗi gốc**: task treo vĩnh viễn khi lỗi, search Pexels từng-ký-tự khi LLM lỗi, phụ đề rơi sang Whisper 3GB khi lệch dòng, phụ đề chạy trước giọng đọc
 
+## Giao diện
+
+| Tạo video + chọn font (preview chữ thật) | Cài đặt (LLM, Pexels, FPT.AI...) | Responsive mobile |
+|---|---|---|
+| ![Tạo video](docs/screenshots/ui-fonts.png) | ![Cài đặt](docs/screenshots/ui-settings.png) | ![Mobile](docs/screenshots/ui-mobile.png) |
+
 ## Cài đặt
 
 Yêu cầu: Python 3.11+, [uv](https://docs.astral.sh/uv/), Node 18+, [pnpm](https://pnpm.io/), ffmpeg.
@@ -52,6 +58,7 @@ Mở web → nút **⚙️ Cài đặt** → điền key:
 |---|---|---|---|
 | **LLM** (Gemini/Groq/...) | ✅ | [Gemini](https://aistudio.google.com/apikey) · [Groq](https://console.groq.com/keys) | Có, đủ dùng |
 | **Pexels** (video nền) | ✅ | [pexels.com/api](https://www.pexels.com/api/) | 200 req/giờ |
+| **FPT.AI** (giọng Việt postcard) | ❌ | [console.fpt.ai](https://console.fpt.ai) | Có free tier |
 | **ElevenLabs** (giọng Adam...) | ❌ | [elevenlabs.io](https://elevenlabs.io/app/settings/api-keys) | 10k ký tự/tháng |
 
 - Key Gemini dùng cho cả **viết kịch bản lẫn giọng Gemini TTS** — 1 key 2 việc
@@ -63,10 +70,11 @@ Mở web → nút **⚙️ Cài đặt** → điền key:
 
 1. Nhập **chủ đề** (vd: *"Cần Thơ về đêm có gì khiến người ta thương?"*)
 2. Kéo **Độ dài kịch bản** (1 đoạn ≈ 40s video, tối đa 15 đoạn ≈ 10 phút) → bấm **✨ AI viết kịch bản** hoặc tự viết
-3. Chọn **giọng đọc**:
-   - ✨ **Gemini** (Puck, Aoede, Charon...) — free, tự nhiên, đọc theo style cấu hình sẵn (mặc định: ấm áp kiểu đọc bưu thiếp)
+3. Chọn **giọng đọc** (bấm **🔊** cạnh ô chọn để **nghe thử ngay** — backend đọc 1 câu mẫu):
+   - 💌 **FPT.AI** (Ban Mai, Ngọc Lam, Thu Minh, Lê Minh...) — giọng Việt tự nhiên kiểu voiceover TikTok, **hợp video postcard/chill nhất**; cần key FPT.AI (có free tier)
+   - 🆓 **Edge** — free vô hạn, không cần key: Hoài My / Nam Minh (Việt) + Ava / Andrew / Emma / Brian (đa ngôn ngữ, đọc được tiếng Việt, rất tự nhiên) + Aria / Jenny / Guy kiểu TikTok
+   - ✨ **Gemini** (Aoede, Charon, Puck...) — free với key Gemini, đọc theo style cấu hình sẵn (mặc định: ấm áp kiểu đọc bưu thiếp)
    - 🎙️ **ElevenLabs** (Adam, Rachel...) — chất nhất, cần key, 10k ký tự/tháng
-   - 🇻🇳 **Edge** (Hoài My, Nam Minh) — free vô hạn, hợp video dài
 4. Chọn **bối cảnh video nền** = Chủ đề × Địa điểm:
    - Chủ đề: 🌅 Bình minh / 🌇 Hoàng hôn / 🌾 Cánh đồng / 🌸 Hoa / ☕🌧️🕯️ 3 vị Chill / 🌃 Đêm phố...
    - Địa điểm: 🇻🇳 13 mục Việt Nam / 🇨🇭 Thụy Sĩ / 🇯🇵 Nhật / 🇫🇷 Paris...
@@ -92,10 +100,12 @@ Video lưu tại `storage/tasks/<task-id>/`. Nút **📚 Thư viện** xem lại
 
 ## Phụ đề
 
-- Font mặc định **TikTok Sans Bold** — đúng look caption TikTok, đủ dấu tiếng Việt (dự phòng: Be Vietnam Pro Bold)
+- **16 font chọn ngay trên web** (mục Nâng cao → Font phụ đề): bấm vào ô font là thấy **chữ mẫu hiển thị đúng kiểu** — TikTok Sans, Be Vietnam Pro, Oswald, Montserrat, Nunito, Quicksand, Comfortaa, Baloo 2, Playfair Display, Pacifico, Dancing Script, Lobster, Roboto Condensed... **tất cả đều đủ dấu tiếng Việt**
+- Kéo **Cỡ chữ phụ đề** ngay dưới picker (30–100)
+- Font mặc định **TikTok Sans Bold** — đúng look caption TikTok (dự phòng: Be Vietnam Pro Bold)
 - Chữ trắng + viền đen, không hộp đen che cảnh
 - Timeline tự né khoảng lặng đầu/cuối file TTS + nghỉ 0.3s giữa câu → khớp nhịp giọng đọc
-- Muốn đổi font: thả file `.ttf` vào `resource/fonts/` rồi đổi `font_name` khi gọi API
+- Muốn thêm font: thả file `.ttf` vào `resource/fonts/` → tự hiện trong picker (lưu ý chọn font có đủ dấu tiếng Việt; Anton/Bebas Neue **không** có dấu)
 
 ## Lỗi thường gặp
 

@@ -205,6 +205,27 @@ def is_mimo_voice(voice_name: str):
     return voice_name.startswith("mimo:")
 
 
+def is_fpt_voice(voice_name: str):
+    """Giọng FPT.AI TTS — giọng Việt tự nhiên kiểu voiceover (Ban Mai, Ngọc Lam...)."""
+    return voice_name.startswith("fpt:")
+
+
+def get_fpt_voices() -> list[str]:
+    # Bộ giọng FPT.AI v5; các giọng ấm/truyền cảm hợp video postcard để đầu danh sách.
+    voices_with_gender = [
+        ("banmai", "Female"),
+        ("ngoclam", "Female"),
+        ("thuminh", "Female"),
+        ("linhsan", "Female"),
+        ("myan", "Female"),
+        ("lannhi", "Female"),
+        ("leminh", "Male"),
+        ("minhquang", "Male"),
+        ("giahuy", "Male"),
+    ]
+    return [f"fpt:{voice}-{gender}" for voice, gender in voices_with_gender]
+
+
 def is_no_voice(voice_name: str | None) -> bool:
     """
     判断用户是否明确选择了“无配音”模式。
@@ -374,6 +395,15 @@ def tts(
             return mimo_tts(text, voice, voice_rate, voice_file, voice_volume)
         else:
             logger.error(f"Invalid mimo voice name format: {voice_name}")
+            return None
+    elif is_fpt_voice(voice_name):
+        # format: fpt:voice-Gender (gender đã được parse_voice_name lược bỏ trước đó)
+        parts = voice_name.split(":")
+        if len(parts) >= 2:
+            voice = parts[1].split("-")[0]
+            return fpt_tts(text, voice, voice_rate, voice_file, voice_volume)
+        else:
+            logger.error(f"Invalid fpt voice name format: {voice_name}")
             return None
     return azure_tts_v1(text, voice_name, voice_rate, voice_file)
 
@@ -1064,6 +1094,145 @@ def elevenlabs_tts(
             )
         except Exception as e:
             logger.error(f"elevenlabs tts failed: {str(e)}")
+    return None
+
+
+def _fpt_post_async_url(
+    url: str, headers: dict, text: str, retries: int = 2
+) -> Union[str, None]:
+    """
+    Gửi text tới FPT, lấy URL file mp3 (trường "async").
+    Chỉ retry khi POST lỗi mạng/HTTP — KHÔNG retry khi text quá dài/quota (vô ích
+    và mỗi POST đều tốn ký tự quota FPT).
+    """
+    for i in range(retries):
+        try:
+            resp = requests.post(
+                url, data=text.encode("utf-8"), headers=headers, timeout=60
+            )
+            if resp.status_code != 200:
+                logger.error(
+                    f"fpt tts POST failed: {resp.status_code}, {resp.text[:300]}"
+                )
+                continue
+            data = resp.json()
+            if str(data.get("error", "0")) not in ("0", "None"):
+                # vd vượt giới hạn ký tự / sai key — báo và dừng, không retry
+                logger.error(f"fpt tts api error (dừng): {data}")
+                return None
+            audio_url = data.get("async")
+            if audio_url:
+                return audio_url
+            logger.error(f"fpt tts: thiếu async url, resp: {data}")
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"fpt tts POST exception: {e}")
+    return None
+
+
+def _fpt_download_async(audio_url: str, max_wait: float = 180.0) -> Union[bytes, None]:
+    """
+    FPT tạo file mp3 bất đồng bộ: file chỉ sẵn sàng sau vài giây tới vài chục
+    giây (text càng dài càng lâu). Poll URL tới khi tải được mp3 hợp lệ.
+    """
+    deadline = time.time() + max_wait
+    delay = 1.0
+    last_status = None
+    while time.time() < deadline:
+        try:
+            r = requests.get(audio_url, timeout=30)
+            last_status = r.status_code
+            if r.status_code == 200 and r.content and len(r.content) > 2048:
+                ctype = r.headers.get("Content-Type", "").lower()
+                head = r.content[:3]
+                is_mp3 = (
+                    "audio" in ctype
+                    or "octet-stream" in ctype
+                    or head == b"ID3"
+                    or head[:2] in (b"\xff\xfb", b"\xff\xf3", b"\xff\xf2")
+                )
+                if is_mp3:
+                    return r.content
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"fpt poll error: {e}")
+        time.sleep(delay)
+        delay = min(delay + 0.5, 3.0)
+    logger.error(
+        f"fpt tts: file chưa sẵn sàng sau {int(max_wait)}s "
+        f"(HTTP cuối: {last_status}). Text có thể quá dài cho FPT — "
+        f"thử kịch bản ngắn hơn hoặc đổi giọng Edge."
+    )
+    return None
+
+
+def fpt_tts(
+    text: str,
+    voice: str,
+    voice_rate: float,
+    voice_file: str,
+    voice_volume: float = 1.0,
+) -> Union[SubMaker, None]:
+    """
+    Sinh giọng bằng FPT.AI TTS (https://console.fpt.ai) — giọng Việt tự nhiên.
+
+    Args:
+        voice: mã giọng FPT, vd "banmai", "ngoclam", "leminh"...
+        voice_rate: tốc độ đọc của app (0.5–2.0) → map sang speed FPT (-3..3)
+        voice_volume: FPT không hỗ trợ chỉnh âm lượng, bỏ qua.
+    """
+    text = text.strip()
+    api_key = config.app.get("fpt_api_key", "")
+    if not api_key:
+        logger.error("FPT API key is not set (config: fpt_api_key)")
+        return None
+
+    # FPT speed: -3..3 (0 = bình thường). Map từ rate 1.0 -> 0, 2.0 -> +3, 0.5 -> -3.
+    if voice_rate >= 1.0:
+        speed = round((voice_rate - 1.0) * 3)
+    else:
+        speed = round((voice_rate - 1.0) * 6)
+    speed = max(-3, min(3, speed))
+
+    url = "https://api.fpt.ai/hmi/tts/v5"
+    headers = {
+        "api-key": api_key,
+        "voice": voice,
+        "speed": str(speed),
+        "Cache-Control": "no-cache",
+    }
+
+    try:
+        logger.info(f"start fpt tts, voice: {voice}, speed: {speed}, chars: {len(text)}")
+        # 1) POST 1 lần lấy URL (text dài chỉ gửi đúng 1 lần để khỏi tốn quota)
+        audio_url = _fpt_post_async_url(url, headers, text)
+        if not audio_url:
+            return None
+        # 2) Poll tới khi mp3 sẵn sàng (text dài → FPT sinh lâu, chờ tới 180s)
+        max_wait = max(60.0, min(300.0, len(text) * 0.25))
+        audio_bytes = _fpt_download_async(audio_url, max_wait=max_wait)
+        if not audio_bytes:
+            return None
+
+        with open(voice_file, "wb") as f:
+            f.write(audio_bytes)
+
+        audio_clip = AudioFileClip(voice_file)
+        audio_duration = audio_clip.duration
+        audio_clip.close()
+
+        # Giống Gemini/ElevenLabs: chia câu theo dấu câu rồi phân bổ thời lượng
+        sub_maker = ensure_legacy_submaker_fields(SubMaker())
+        lead_in, tail = measure_audio_silences(voice_file)
+        logger.info(f"completed fpt tts, output file: {voice_file}")
+        return populate_legacy_submaker_with_full_text(
+            sub_maker=sub_maker,
+            text=text,
+            audio_duration_seconds=audio_duration,
+            lead_in_seconds=lead_in,
+            tail_seconds=tail,
+            gap_seconds=0.3,
+        )
+    except Exception as e:
+        logger.error(f"fpt tts failed, error: {str(e)}")
     return None
 
 

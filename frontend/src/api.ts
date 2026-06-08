@@ -66,6 +66,25 @@ export function toMusicUrl(file: string): string {
   return `/api/v1/musics/${encodeURIComponent(file)}`;
 }
 
+export interface FontFile {
+  name: string;
+  label: string;
+}
+
+export function getFonts(): Promise<{ fonts: FontFile[] }> {
+  return request("/api/v1/fonts");
+}
+
+/** URL tải file font để preview chữ thật (@font-face) trên trình duyệt */
+export function toFontUrl(file: string): string {
+  return `/api/v1/fonts/${encodeURIComponent(file)}`;
+}
+
+/** URL stream giọng mẫu để nghe thử (Edge free; Gemini/ElevenLabs cần key) */
+export function previewVoiceUrl(voice: string, rate = 1.0): string {
+  return `/api/v1/voices/preview?voice=${encodeURIComponent(voice)}&rate=${rate}`;
+}
+
 export interface ProviderConfig {
   api_key: string;
   model_name: string;
@@ -78,6 +97,7 @@ export interface AppSettings {
   pexels_api_keys: string[];
   pixabay_api_keys: string[];
   elevenlabs_api_key: string;
+  fpt_api_key: string;
 }
 
 export function getSettings(): Promise<AppSettings> {
@@ -92,6 +112,7 @@ export function saveSettings(body: {
   pexels_api_keys: string[];
   pixabay_api_keys: string[];
   elevenlabs_api_key: string;
+  fpt_api_key: string;
 }): Promise<void> {
   return request("/api/v1/config", {
     method: "PUT",

@@ -6,6 +6,7 @@ import {
   TASK_COMPLETE,
   TASK_FAILED,
   VOICES,
+  VOICE_GROUPS,
   type TaskInfo,
   type VideoParams,
 } from "../types";
@@ -82,6 +83,30 @@ function prettyMusicName(file: string): string {
     .join(" ");
 }
 
+/** Tên CSS font-family duy nhất cho 1 file font (dùng để preview chữ thật) */
+function fontFamilyFor(file: string): string {
+  return "vf_" + file.replace(/[^a-zA-Z0-9]/g, "_");
+}
+
+/** Inject @font-face cho từng font để trình duyệt render chữ đúng kiểu (1 lần) */
+function injectFontFaces(list: { name: string }[]) {
+  const id = "subtitle-font-faces";
+  const css = list
+    .map(
+      (f) =>
+        `@font-face{font-family:'${fontFamilyFor(f.name)}';` +
+        `src:url('${api.toFontUrl(f.name)}');font-display:swap;}`
+    )
+    .join("\n");
+  let el = document.getElementById(id) as HTMLStyleElement | null;
+  if (!el) {
+    el = document.createElement("style");
+    el.id = id;
+    document.head.appendChild(el);
+  }
+  el.textContent = css;
+}
+
 export default function CreateView() {
   const [params, setParams] = useState<VideoParams>({ ...DEFAULT_PARAMS });
   const [themeIdx, setThemeIdx] = useState(0);
@@ -89,6 +114,13 @@ export default function CreateView() {
   const [musics, setMusics] = useState<api.MusicFile[]>([]);
   const [previewing, setPreviewing] = useState(false);
   const previewRef = useRef<HTMLAudioElement | null>(null);
+  // Nghe thử giọng đọc (tạo mẫu on-the-fly ở backend)
+  const [voicePreviewing, setVoicePreviewing] = useState(false);
+  const [voicePreviewLoading, setVoicePreviewLoading] = useState(false);
+  const [voicePreviewError, setVoicePreviewError] = useState("");
+  const voicePreviewRef = useRef<HTMLAudioElement | null>(null);
+  // Danh sách font phụ đề (nạp từ backend)
+  const [fonts, setFonts] = useState<api.FontFile[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [scriptLoading, setScriptLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -102,10 +134,21 @@ export default function CreateView() {
   const set = <K extends keyof VideoParams>(key: K, value: VideoParams[K]) =>
     setParams((p) => ({ ...p, [key]: value }));
 
-  // Nạp danh sách nhạc nền + dọn audio preview khi unmount
+  // Nạp danh sách nhạc nền + font, dọn audio preview khi unmount
   useEffect(() => {
     api.getMusics().then((res) => setMusics(res.files || [])).catch(() => {});
-    return () => stopPreview();
+    api
+      .getFonts()
+      .then((res) => {
+        const list = res.fonts || [];
+        setFonts(list);
+        injectFontFaces(list);
+      })
+      .catch(() => {});
+    return () => {
+      stopPreview();
+      stopVoicePreview();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -113,6 +156,41 @@ export default function CreateView() {
     previewRef.current?.pause();
     previewRef.current = null;
     setPreviewing(false);
+  };
+
+  // Nghe thử giọng đọc: backend tạo mẫu ngắn (Edge free; Gemini/ElevenLabs cần key)
+  const stopVoicePreview = () => {
+    voicePreviewRef.current?.pause();
+    voicePreviewRef.current = null;
+    setVoicePreviewing(false);
+    setVoicePreviewLoading(false);
+  };
+
+  const toggleVoicePreview = () => {
+    if (voicePreviewing || voicePreviewLoading) {
+      stopVoicePreview();
+      return;
+    }
+    setVoicePreviewError("");
+    setVoicePreviewLoading(true);
+    const audio = new Audio(api.previewVoiceUrl(params.voice_name, params.voice_rate));
+    audio.volume = 0.9;
+    audio.onplaying = () => {
+      setVoicePreviewLoading(false);
+      setVoicePreviewing(true);
+    };
+    audio.onended = () => stopVoicePreview();
+    audio.onerror = () => {
+      setVoicePreviewError(
+        "Không tạo được giọng mẫu — kiểm tra key (Gemini/ElevenLabs) hoặc dùng giọng 🆓 Edge."
+      );
+      stopVoicePreview();
+    };
+    audio.play().catch(() => {
+      setVoicePreviewError("Trình duyệt chặn phát audio — bấm lại lần nữa.");
+      stopVoicePreview();
+    });
+    voicePreviewRef.current = audio;
   };
 
   const togglePreview = () => {
@@ -195,21 +273,21 @@ export default function CreateView() {
   const isRunning = !!taskId && !isDone && !isFailed;
 
   return (
-    <div className="grid lg:grid-cols-[1fr_420px] gap-6 items-start">
+    <div className="grid lg:grid-cols-[minmax(0,1fr)_420px] gap-6 items-start">
       {/* ===== Cột trái: Form ===== */}
-      <div className="glass p-5 sm:p-6 space-y-5">
+      <div className="glass p-5 sm:p-6 space-y-5 min-w-0">
         {/* Chủ đề */}
         <div>
           <label className="label">Chủ đề video</label>
           <div className="flex gap-2">
             <input
-              className="input"
+              className="input flex-1 min-w-0"
               placeholder="Vd: 5 mẹo để ngủ ngon hơn"
               value={params.video_subject}
               onChange={(e) => set("video_subject", e.target.value)}
             />
             <button
-              className="btn-ghost whitespace-nowrap"
+              className="btn-ghost whitespace-nowrap shrink-0"
               onClick={handleGenerateScript}
               disabled={scriptLoading}
             >
@@ -243,17 +321,37 @@ export default function CreateView() {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="label">Giọng đọc</label>
-            <select
-              className="input"
-              value={params.voice_name}
-              onChange={(e) => set("voice_name", e.target.value)}
-            >
-              {VOICES.map((v) => (
-                <option key={v.value} value={v.value}>
-                  {v.label}
-                </option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                className="input flex-1 min-w-0"
+                value={params.voice_name}
+                onChange={(e) => {
+                  stopVoicePreview();
+                  set("voice_name", e.target.value);
+                }}
+              >
+                {VOICE_GROUPS.map((g) => (
+                  <optgroup key={g} label={g}>
+                    {VOICES.filter((v) => v.group === g).map((v) => (
+                      <option key={v.value} value={v.value}>
+                        {v.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="btn-ghost px-3 shrink-0"
+                onClick={toggleVoicePreview}
+                title={voicePreviewing ? "Dừng" : "Nghe thử giọng"}
+              >
+                {voicePreviewLoading ? "⏳" : voicePreviewing ? "⏹" : "🔊"}
+              </button>
+            </div>
+            {voicePreviewError && (
+              <p className="text-xs text-amber-400 mt-1">{voicePreviewError}</p>
+            )}
           </div>
           <div>
             <label className="label">Ngôn ngữ kịch bản</label>
@@ -445,7 +543,7 @@ export default function CreateView() {
                 <label className="label">Nhạc nền</label>
                 <div className="flex gap-2">
                   <select
-                    className="input"
+                    className="input flex-1 min-w-0"
                     value={params.bgm_file || params.bgm_type}
                     onChange={(e) => {
                       const v = e.target.value;
@@ -514,6 +612,63 @@ export default function CreateView() {
                   )}
                 </div>
               </div>
+
+              {params.subtitle_enabled && (
+                <div className="sm:col-span-2">
+                  <label className="label">
+                    Font phụ đề{" "}
+                    <span className="text-zinc-600 normal-case">
+                      (bấm để chọn — chữ mẫu hiển thị đúng font)
+                    </span>
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-1">
+                    {fonts.map((f) => {
+                      const active = params.font_name === f.name;
+                      return (
+                        <button
+                          type="button"
+                          key={f.name}
+                          onClick={() => set("font_name", f.name)}
+                          title={f.label}
+                          className={
+                            "rounded-xl border px-3 py-2 text-left transition min-w-0 " +
+                            (active
+                              ? "border-cyan-500 bg-cyan-500/10 ring-1 ring-cyan-500/40"
+                              : "border-white/10 bg-black/30 hover:border-white/30")
+                          }
+                        >
+                          <div
+                            className="truncate leading-tight"
+                            style={{
+                              fontFamily: fontFamilyFor(f.name),
+                              fontSize: 22,
+                              color: "#fff",
+                            }}
+                          >
+                            Việt Nam ơi
+                          </div>
+                          <div className="text-[10px] text-zinc-400 truncate mt-0.5 normal-case">
+                            {f.label}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* Cỡ chữ phụ đề */}
+                  <label className="label mt-3">
+                    Cỡ chữ phụ đề: {params.font_size}
+                  </label>
+                  <input
+                    type="range"
+                    min={30}
+                    max={100}
+                    step={2}
+                    className="w-full accent-cyan-500"
+                    value={params.font_size}
+                    onChange={(e) => set("font_size", +e.target.value)}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -535,7 +690,7 @@ export default function CreateView() {
       </div>
 
       {/* ===== Cột phải: Tiến độ & Preview ===== */}
-      <div className="glass p-5 sm:p-6 lg:sticky lg:top-6">
+      <div className="glass p-5 sm:p-6 lg:sticky lg:top-6 min-w-0">
         <h2 className="font-semibold mb-4 flex items-center gap-2">
           📺 Kết quả
         </h2>

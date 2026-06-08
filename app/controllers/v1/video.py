@@ -1,4 +1,5 @@
 import glob
+import hashlib
 import os
 import pathlib
 import shutil
@@ -31,6 +32,7 @@ from app.models.schema import (
 )
 from app.services import state as sm
 from app.services import task as tm
+from app.services import voice as voice_service
 from app.utils import file_security, utils
 
 # 认证依赖项
@@ -267,6 +269,121 @@ def get_music_file(
             "", status_code=400, message=f"{request_id}: only mp3 preview is supported"
         )
     return FileResponse(path=file_path, media_type="audio/mpeg")
+
+
+# ===== Fonts: liệt kê + stream file để preview chữ thật trên web =====
+
+# Nhãn tiếng Việt + emoji cho các font đã biết; font lạ sẽ tự suy ra từ tên file.
+_FONT_LABELS: dict[str, str] = {
+    "TikTokSans-Bold.ttf": "🔥 TikTok Sans — caption chuẩn TikTok",
+    "BeVietnamPro-Bold.ttf": "🇻🇳 Be Vietnam Pro — sans Việt sạch",
+    "Oswald-Bold.ttf": "📰 Oswald — sans hẹp, mạnh",
+    "RobotoCondensed-Bold.ttf": "📐 Roboto Condensed — hẹp, gọn",
+    "Montserrat-ExtraBold.ttf": "✨ Montserrat — hiện đại, dày",
+    "Nunito-ExtraBold.ttf": "🍩 Nunito — bo tròn, thân thiện",
+    "Quicksand-Bold.ttf": "🫧 Quicksand — bo tròn, nhẹ",
+    "Comfortaa-Bold.ttf": "☁️ Comfortaa — bo tròn, mềm",
+    "Baloo2-Bold.ttf": "🎈 Baloo 2 — mập, vui nhộn",
+    "PlayfairDisplay-Bold.ttf": "👑 Playfair Display — serif sang",
+    "Pacifico-Regular.ttf": "🌴 Pacifico — viết tay, chill",
+    "DancingScript-Bold.ttf": "💕 Dancing Script — viết tay bay",
+    "Lobster-Regular.ttf": "🦞 Lobster — script cổ điển",
+    "Charm-Bold.ttf": "🌸 Charm — thanh mảnh",
+    "Charm-Regular.ttf": "🌸 Charm — thanh mảnh (mỏng)",
+    "UTM Kabel KT.ttf": "🔤 UTM Kabel",
+}
+
+_FONT_EXTS = (".ttf", ".otf")
+
+
+def _pretty_font_label(filename: str) -> str:
+    if filename in _FONT_LABELS:
+        return _FONT_LABELS[filename]
+    name = os.path.splitext(filename)[0].replace("-", " ").replace("_", " ")
+    return name.strip()
+
+
+@router.get("/fonts", summary="Retrieve available subtitle fonts")
+def get_font_list(request: Request):
+    font_path = utils.font_dir()
+    fonts = []
+    for file in sorted(glob.glob(os.path.join(font_path, "*"))):
+        filename = os.path.basename(file)
+        if not filename.lower().endswith(_FONT_EXTS):
+            continue
+        fonts.append({"name": filename, "label": _pretty_font_label(filename)})
+    return utils.get_response(200, {"fonts": fonts})
+
+
+@router.get("/fonts/{file_name}", summary="Stream a font file for browser preview")
+def get_font_file(
+    request: Request, file_name: str = Path(..., description="Font file name")
+):
+    request_id = base.get_task_id(request)
+    font_path = utils.font_dir()
+    file_path = _resolve_path_within_directory(font_path, file_name, request_id)
+    if not file_path.lower().endswith(_FONT_EXTS):
+        raise HttpException(
+            "", status_code=400, message=f"{request_id}: only ttf/otf is supported"
+        )
+    return FileResponse(path=file_path, media_type="font/ttf")
+
+
+# ===== Voice: tạo mẫu ngắn để nghe thử (Edge TTS free; Gemini/ElevenLabs cần key) =====
+
+_VOICE_PREVIEW_SAMPLES = {
+    "vi": "Xin chào, đây là giọng đọc mẫu cho video của bạn.",
+    "en": "Hi there, this is a sample voice for your video.",
+    "zh": "你好，这是为你的视频准备的示例配音。",
+}
+
+
+def _voice_sample_text(voice_name: str) -> str:
+    name = voice_name.lower()
+    if name.startswith("vi-") or "vi-vn" in name:
+        return _VOICE_PREVIEW_SAMPLES["vi"]
+    if name.startswith("zh-") or "zh-cn" in name:
+        return _VOICE_PREVIEW_SAMPLES["zh"]
+    if name.startswith("en-") or "en-us" in name:
+        return _VOICE_PREVIEW_SAMPLES["en"]
+    # Gemini / ElevenLabs / khác: mặc định tiếng Việt (use-case chính)
+    return _VOICE_PREVIEW_SAMPLES["vi"]
+
+
+@router.get("/voices/preview", summary="Generate a short sample audio for a voice")
+def preview_voice(
+    request: Request,
+    voice: str = Query(..., description="Voice name, e.g. vi-VN-HoaiMyNeural-Female"),
+    rate: float = Query(1.0, ge=0.5, le=2.0, description="Speech rate"),
+):
+    request_id = base.get_task_id(request)
+    voice_name = voice_service.parse_voice_name(voice)
+    text = _voice_sample_text(voice_name)
+
+    cache_dir = utils.storage_dir("cache/voice_preview", create=True)
+    digest = hashlib.md5(f"{voice}|{rate}|{text}".encode("utf-8")).hexdigest()
+    cache_file = os.path.join(cache_dir, f"{digest}.mp3")
+
+    if not os.path.exists(cache_file) or os.path.getsize(cache_file) == 0:
+        try:
+            sub_maker = voice_service.tts(
+                text=text,
+                voice_name=voice_name,
+                voice_rate=rate,
+                voice_file=cache_file,
+                voice_volume=1.0,
+            )
+        except Exception as e:  # noqa: BLE001 — báo lỗi gọn cho FE thay vì 500 thô
+            logger.error(f"voice preview failed: {voice} -> {e}")
+            sub_maker = None
+        if sub_maker is None or not os.path.exists(cache_file) or os.path.getsize(cache_file) == 0:
+            raise HttpException(
+                "",
+                status_code=502,
+                message=f"{request_id}: không tạo được giọng mẫu — kiểm tra API key (Gemini/ElevenLabs) hoặc thử giọng Edge",
+            )
+
+    return FileResponse(path=cache_file, media_type="audio/mpeg")
 
 
 @router.post(
