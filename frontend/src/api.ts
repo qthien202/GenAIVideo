@@ -122,6 +122,25 @@ export function saveSettings(body: {
   });
 }
 
+/** URL tải toàn bộ API key thành 1 file .json (mang qua máy khác) */
+export function exportKeysUrl(): string {
+  return "/api/v1/config/export";
+}
+
+/** Nạp API key từ file .json đã tải về trước đó (multipart upload) */
+export async function importKeys(file: File): Promise<{ applied: number }> {
+  const form = new FormData();
+  form.append("file", file);
+  // KHÔNG set Content-Type để trình duyệt tự thêm boundary multipart
+  const res = await fetch("/api/v1/config/import", { method: "POST", body: form });
+  const json = await res.json().catch(() => ({}));
+  // BE trả lỗi qua field "status" trong body (không phải HTTP code)
+  if (!res.ok || (json?.status && json.status !== 200)) {
+    throw new Error(json?.message || `HTTP ${res.status}`);
+  }
+  return json.data;
+}
+
 /** Chuyển đường dẫn video mà task trả về thành URL stream được qua proxy */
 export function toStreamUrl(fileUrl: string): string {
   // BE trả dạng "/tasks/<task_id>/final-1.mp4" hoặc URL đầy đủ

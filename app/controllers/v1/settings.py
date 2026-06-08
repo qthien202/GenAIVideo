@@ -1,11 +1,23 @@
+import json
 from typing import List
 
-from fastapi import Request
+from fastapi import File, Request, UploadFile
+from fastapi.responses import Response
+from loguru import logger
 from pydantic import BaseModel
 
 from app.config import config
 from app.controllers.v1.base import new_router
 from app.utils import utils
+
+# Các field key được export/import qua "file key" (ngoài các provider LLM)
+_EXTRA_KEY_FIELDS = (
+    "pexels_api_keys",
+    "pixabay_api_keys",
+    "elevenlabs_api_key",
+    "fpt_api_key",
+    "gcloud_tts_api_key",
+)
 
 # authentication dependency
 # router = new_router(dependencies=[Depends(base.verify_token)])
@@ -92,3 +104,60 @@ def save_settings(request: Request, body: SaveSettingsRequest):
     config.save_config()
 
     return utils.get_response(200)
+
+
+def _collect_all_keys() -> dict:
+    """Gom toàn bộ key (mọi provider LLM + nguồn video + TTS) thành 1 dict."""
+    providers = {}
+    for p in LLM_PROVIDERS:
+        providers[p] = {
+            "api_key": config.app.get(f"{p}_api_key", ""),
+            "model_name": config.app.get(f"{p}_model_name", ""),
+            "base_url": config.app.get(f"{p}_base_url", ""),
+        }
+    data = {"llm_provider": config.app.get("llm_provider", ""), "providers": providers}
+    for k in _EXTRA_KEY_FIELDS:
+        data[k] = config.app.get(k, "")
+    return data
+
+
+@router.get("/config/export", summary="Tải toàn bộ API key thành 1 file (mang qua máy khác)")
+def export_keys(request: Request):
+    content = json.dumps(_collect_all_keys(), ensure_ascii=False, indent=2)
+    return Response(
+        content=content,
+        media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=genaivideo-keys.json"},
+    )
+
+
+@router.post("/config/import", summary="Nạp API key từ file đã tải về trước đó")
+async def import_keys(request: Request, file: UploadFile = File(...)):
+    raw = await file.read()
+    try:
+        data = json.loads(raw.decode("utf-8-sig"))
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"import keys: invalid file: {e}")
+        return utils.get_response(400, message="File không hợp lệ — cần file key .json tải từ nút Xuất.")
+
+    applied = 0
+    if data.get("llm_provider"):
+        config.app["llm_provider"] = str(data["llm_provider"]).strip().lower()
+        applied += 1
+    for p, cfg in (data.get("providers") or {}).items():
+        if p not in LLM_PROVIDERS or not isinstance(cfg, dict):
+            continue
+        for suf in ("api_key", "model_name", "base_url"):
+            v = cfg.get(suf)
+            if v:  # chỉ ghi đè khi có giá trị, tránh xoá key đang có
+                config.app[f"{p}_{suf}"] = v
+                applied += 1
+    for k in _EXTRA_KEY_FIELDS:
+        if k in data and data[k]:
+            config.app[k] = data[k]
+            applied += 1
+
+    if applied == 0:
+        return utils.get_response(400, message="File không có key nào để nạp.")
+    config.save_config()
+    return utils.get_response(200, {"applied": applied})

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as api from "../api";
 
 // Nhãn hiển thị thân thiện; thứ tự = thứ tự trong dropdown
@@ -57,22 +57,44 @@ export default function SettingsView() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [importMsg, setImportMsg] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const applySettings = (s: api.AppSettings) => {
+    setSettings(s);
+    applyProvider(s, s.llm_provider);
+    setPexelsKeys(s.pexels_api_keys.join(", "));
+    setPixabayKeys(s.pixabay_api_keys.join(", "));
+    setElevenlabsKey(s.elevenlabs_api_key ?? "");
+    setFptKey(s.fpt_api_key ?? "");
+    setGcloudKey(s.gcloud_tts_api_key ?? "");
+  };
 
   useEffect(() => {
     api
       .getSettings()
-      .then((s) => {
-        setSettings(s);
-        applyProvider(s, s.llm_provider);
-        setPexelsKeys(s.pexels_api_keys.join(", "));
-        setPixabayKeys(s.pixabay_api_keys.join(", "));
-        setElevenlabsKey(s.elevenlabs_api_key ?? "");
-        setFptKey(s.fpt_api_key ?? "");
-        setGcloudKey(s.gcloud_tts_api_key ?? "");
-      })
+      .then(applySettings)
       .catch((e: any) => setError(`Không tải được cài đặt: ${e.message}`))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (e.target) e.target.value = ""; // cho phép chọn lại cùng file
+    if (!file) return;
+    setError("");
+    setImportMsg("");
+    try {
+      const res = await api.importKeys(file);
+      const fresh = await api.getSettings();
+      applySettings(fresh);
+      setImportMsg(`✅ Đã nạp ${res?.applied ?? ""} key từ file. Bấm 💾 Lưu để chắc chắn.`);
+      setTimeout(() => setImportMsg(""), 6000);
+    } catch (err: any) {
+      setError(`Nạp file key thất bại: ${err.message}`);
+    }
+  };
 
   const applyProvider = (s: api.AppSettings, p: string) => {
     setProvider(p);
@@ -142,6 +164,35 @@ export default function SettingsView() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
+      {/* File key: xuất / nạp nhanh khi qua máy khác */}
+      <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/[0.06] p-5 sm:p-6 space-y-3">
+        <h2 className="font-semibold flex items-center gap-2">🔑 File key (qua máy khác)</h2>
+        <p className="text-xs text-zinc-400 -mt-1">
+          <b>Tải file key</b> để lưu tất cả API key thành 1 file. Qua máy khác chỉ
+          cần <b>Nạp file key</b> đó vào là chạy — khỏi nhập tay lại.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <a className="btn-ghost" href={api.exportKeysUrl()} download>
+            ⬇️ Tải file key
+          </a>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            ⬆️ Nạp file key
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+        </div>
+        {importMsg && <p className="text-xs text-emerald-400">{importMsg}</p>}
+      </div>
+
       {/* LLM */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 sm:p-6 space-y-5">
         <h2 className="font-semibold flex items-center gap-2">🧠 Mô hình AI (LLM)</h2>
