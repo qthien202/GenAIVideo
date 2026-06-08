@@ -144,6 +144,23 @@ def load_config():
         with open(config_file, mode="r", encoding="utf-8-sig") as fp:
             _cfg_content = fp.read()
             _config_ = toml.loads(_cfg_content)
+
+    # "File key" di động: config.local.toml (đã gitignore) — chứa API key để mang
+    # qua máy khác, thả vào thư mục gốc project là chạy, KHỎI nhập lại trên UI.
+    # Giá trị trong file này được merge đè lên config.toml lúc khởi động.
+    local_file = f"{root_dir}/config.local.toml"
+    if os.path.isfile(local_file):
+        try:
+            _local_ = toml.load(local_file)
+            for section, values in _local_.items():
+                if isinstance(values, dict) and isinstance(_config_.get(section), dict):
+                    _config_[section].update(values)
+                else:
+                    _config_[section] = values
+            logger.info("merged API keys from config.local.toml")
+        except Exception as e:
+            logger.warning(f"load config.local.toml failed: {str(e)}")
+
     return _config_
 
 

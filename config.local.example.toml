@@ -1,0 +1,24 @@
+# ============================================================================
+# config.local.toml — "FILE KEY" DI ĐỘNG
+# ----------------------------------------------------------------------------
+# Copy file này thành `config.local.toml`, điền API key của bạn, rồi mang
+# `config.local.toml` qua máy khác thả vào thư mục gốc project là CHẠY NGAY
+# (key tự merge đè lên config.toml lúc khởi động — KHỎI nhập lại trên web).
+#
+# File `config.local.toml` đã được .gitignore nên KHÔNG bị push/lộ key.
+# ============================================================================
+
+[app]
+# LLM dùng để viết kịch bản (chọn 1 provider rồi điền key tương ứng)
+llm_provider = "gemini"
+gemini_api_key = ""
+gemini_model_name = "gemini-2.5-flash"
+
+# Nguồn video nền (ít nhất 1 key)
+pexels_api_keys = [""]
+pixabay_api_keys = [""]
+
+# Giọng đọc
+fpt_api_key = ""            # FPT.AI TTS (giọng Việt postcard)
+elevenlabs_api_key = ""     # ElevenLabs (tuỳ chọn)
+gcloud_tts_api_key = ""     # Google Cloud TTS (tuỳ chọn, cần bật billing)
