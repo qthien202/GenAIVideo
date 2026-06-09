@@ -131,7 +131,27 @@ def generate_audio(task_id, params, video_script):
             sm.state.update_task(task_id, state=const.TASK_STATE_FAILED)
             logger.error("failed to get audio duration from custom audio file.")
             return None, None, None
-        return custom_audio_file, audio_duration, None
+
+        # Có kịch bản + bật phụ đề → rải chữ theo thời lượng audio để vẫn có phụ đề
+        # mà KHÔNG cần Whisper (giống cách TTS tự sinh timing).
+        sub_maker = None
+        if getattr(params, "subtitle_enabled", False) and (video_script or "").strip():
+            try:
+                sub_maker = voice.ensure_legacy_submaker_fields(voice.SubMaker())
+                lead_in, tail = voice.measure_audio_silences(custom_audio_file)
+                sub_maker = voice.populate_legacy_submaker_with_full_text(
+                    sub_maker=sub_maker,
+                    text=video_script,
+                    audio_duration_seconds=audio_duration,
+                    lead_in_seconds=lead_in,
+                    tail_seconds=tail,
+                    gap_seconds=0.3,
+                )
+                logger.info("built subtitle timing from script + custom audio (no whisper)")
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"failed to build subtitle from custom audio: {e}")
+                sub_maker = None
+        return custom_audio_file, audio_duration, sub_maker
 
 def generate_subtitle(task_id, params, video_script, sub_maker, audio_file):
     '''

@@ -410,6 +410,30 @@ def upload_bgm_file(request: Request, file: UploadFile = File(...)):
         "", status_code=400, message=f"{request_id}: Only *.mp3 files can be uploaded"
     )
 
+
+_CUSTOM_AUDIO_EXTS = (".mp3", ".wav", ".m4a", ".aac", ".ogg")
+
+
+@router.post("/audio/upload", summary="Tải file ghi âm/giọng ngoài để dùng làm lời đọc")
+def upload_custom_audio(request: Request, file: UploadFile = File(...)):
+    """Nhận file audio (mp3/wav/m4a/aac/ogg), lưu vào storage/custom_audio,
+    trả về đường dẫn để gửi lại trong field custom_audio_file khi tạo video."""
+    request_id = base.get_task_id(request)
+    safe_filename = _sanitize_upload_filename(file.filename, request_id)
+    if not safe_filename.lower().endswith(_CUSTOM_AUDIO_EXTS):
+        raise HttpException(
+            "",
+            status_code=400,
+            message=f"{request_id}: chỉ nhận file mp3/wav/m4a/aac/ogg",
+        )
+    audio_dir = utils.storage_dir("custom_audio", create=True)
+    save_path = os.path.join(audio_dir, safe_filename)
+    with open(save_path, "wb+") as buffer:
+        file.file.seek(0)
+        buffer.write(file.file.read())
+    return utils.get_response(200, {"file": safe_filename, "path": save_path})
+
+
 @router.get(
     "/video_materials", response_model=VideoMaterialRetrieveResponse, summary="Retrieve local video materials"
 )

@@ -66,6 +66,20 @@ export function toMusicUrl(file: string): string {
   return `/api/v1/musics/${encodeURIComponent(file)}`;
 }
 
+/** Tải file ghi âm/giọng ngoài → trả về đường dẫn để dùng làm lời đọc */
+export async function uploadCustomAudio(
+  file: File
+): Promise<{ file: string; path: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch("/api/v1/audio/upload", { method: "POST", body: form });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || (json?.status && json.status !== 200)) {
+    throw new Error(json?.message || `HTTP ${res.status}`);
+  }
+  return json.data;
+}
+
 export interface FontFile {
   name: string;
   label: string;

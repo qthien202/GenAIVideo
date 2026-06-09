@@ -77,6 +77,7 @@ Mở web → nút **⚙️ Cài đặt** → điền key:
    - 🆓 **Edge** — free vô hạn, không cần key: Hoài My / Nam Minh (Việt) + Ava / Andrew / Emma / Brian (đa ngôn ngữ, đọc được tiếng Việt, rất tự nhiên) + Aria / Jenny / Guy kiểu TikTok
    - ✨ **Gemini** (Aoede, Charon, Puck...) — free với key Gemini, đọc theo style cấu hình sẵn (mặc định: ấm áp kiểu đọc bưu thiếp)
    - 🎙️ **ElevenLabs** (Adam, Rachel...) — chất nhất, cần key, 10k ký tự/tháng
+   - 🎤 **Giọng của bạn**: bấm *"Hoặc tải giọng của bạn"* → tải file ghi âm (mp3/wav/m4a) → app dùng đúng file đó làm lời đọc (bỏ qua TTS). Dán đúng kịch bản → **phụ đề tự khớp theo file, không cần Whisper**. Hợp khi bạn tự thu, hoặc xuất giọng từ CapCut/app khác đem vào.
 4. Chọn **bối cảnh video nền** = Chủ đề × Địa điểm:
    - Chủ đề: 🌅 Bình minh / 🌇 Hoàng hôn / 🌾 Cánh đồng / 🌸 Hoa / ☕🌧️🕯️ 3 vị Chill / 🌃 Đêm phố...
    - Địa điểm: 🇻🇳 13 mục Việt Nam / 🇨🇭 Thụy Sĩ / 🇯🇵 Nhật / 🇫🇷 Paris...

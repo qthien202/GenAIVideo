@@ -121,6 +121,11 @@ export default function CreateView() {
   const voicePreviewRef = useRef<HTMLAudioElement | null>(null);
   // Danh sách font phụ đề (nạp từ backend)
   const [fonts, setFonts] = useState<api.FontFile[]>([]);
+  // Import giọng ngoài (tải file ghi âm làm lời đọc)
+  const [audioUploading, setAudioUploading] = useState(false);
+  const [audioName, setAudioName] = useState("");
+  const [audioError, setAudioError] = useState("");
+  const audioInputRef = useRef<HTMLInputElement | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [scriptLoading, setScriptLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -191,6 +196,29 @@ export default function CreateView() {
       stopVoicePreview();
     });
     voicePreviewRef.current = audio;
+  };
+
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (e.target) e.target.value = "";
+    if (!f) return;
+    setAudioError("");
+    setAudioUploading(true);
+    try {
+      const res = await api.uploadCustomAudio(f);
+      set("custom_audio_file", res.path);
+      setAudioName(res.file);
+    } catch (err: any) {
+      setAudioError(`Tải lên thất bại: ${err.message}`);
+    } finally {
+      setAudioUploading(false);
+    }
+  };
+
+  const clearCustomAudio = () => {
+    set("custom_audio_file", "");
+    setAudioName("");
+    setAudioError("");
   };
 
   const togglePreview = () => {
@@ -351,6 +379,49 @@ export default function CreateView() {
             </div>
             {voicePreviewError && (
               <p className="text-xs text-amber-400 mt-1">{voicePreviewError}</p>
+            )}
+
+            {/* Import giọng ngoài: tải file ghi âm dùng làm lời đọc */}
+            {!params.custom_audio_file ? (
+              <div className="mt-2">
+                <button
+                  type="button"
+                  className="text-xs text-cyan-400 hover:text-cyan-300 transition"
+                  onClick={() => audioInputRef.current?.click()}
+                  disabled={audioUploading}
+                >
+                  {audioUploading ? "⏳ Đang tải..." : "🎤 Hoặc tải giọng của bạn (mp3/wav...)"}
+                </button>
+                <input
+                  ref={audioInputRef}
+                  type="file"
+                  accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg"
+                  className="hidden"
+                  onChange={handleAudioUpload}
+                />
+              </div>
+            ) : (
+              <div className="mt-2 flex items-center gap-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-1.5">
+                <span className="text-xs text-cyan-300 truncate flex-1">
+                  🎤 Dùng giọng của bạn: <b>{audioName}</b>
+                </span>
+                <button
+                  type="button"
+                  className="text-xs text-zinc-400 hover:text-white shrink-0"
+                  onClick={clearCustomAudio}
+                  title="Bỏ, dùng lại giọng TTS"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            {params.custom_audio_file && (
+              <p className="text-[11px] text-zinc-500 mt-1">
+                Bỏ qua giọng TTS ở trên. Dán đúng kịch bản → phụ đề tự khớp theo file.
+              </p>
+            )}
+            {audioError && (
+              <p className="text-xs text-red-400 mt-1">{audioError}</p>
             )}
           </div>
           <div>

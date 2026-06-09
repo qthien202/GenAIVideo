@@ -25,6 +25,7 @@ export interface VideoParams {
   voice_name: string;
   voice_volume: number;
   voice_rate: number;
+  custom_audio_file: string;
   bgm_type: string;
   bgm_file: string;
   bgm_volume: number;
@@ -52,6 +53,7 @@ export const DEFAULT_PARAMS: VideoParams = {
   voice_name: "vi-VN-HoaiMyNeural-Female",
   voice_volume: 1.0,
   voice_rate: 1.0,
+  custom_audio_file: "",
   bgm_type: "random",
   bgm_file: "",
   bgm_volume: 0.2,
